@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NRI Plot Sentinel</string>
+    <string name="toolbar_subtitle">Remote property command center</string>
+    <string name="default_owner_title">Welcome back</string>
+    <string name="welcome_owner">%1$s, your sites are protected</string>
+    <string name="owner_subtitle">Live alerts, gateway health, and device visibility in one secure view.</string>
+    <string name="properties">Properties</string>
+    <string name="alerts_live">Live alerts</string>
+    <string name="devices_online">Devices online</string>
+    <string name="protected_perimeter">Protected perimeter</string>
+    <string name="recent_alerts">Recent Alerts</string>
+    <string name="device_health">Device Health</string>
+    <string name="no_alerts">No active alerts right now.</string>
+    <string name="no_devices">No registered devices yet.</string>
+    <string name="retry">Retry</string>
+    <string name="login_title">Secure Owner Login</string>
+    <string name="login_subtitle">Sign in to monitor your hometown property from anywhere.</string>
+    <string name="email_hint">Email address</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="dashboard_title">Device Dashboard</string>
+    <string name="dashboard_subtitle">Secure visibility into your active gateway</string>
+    <string name="connected_device">Connected Device</string>
+    <string name="device_status_label">Device Status</string>
+    <string name="status_online">Online</string>
+    <string name="status_offline">Offline</string>
+    <string name="online_badge">ONLINE</string>
+    <string name="offline_badge">OFFLINE</string>
+    <string name="last_heartbeat">Last Heartbeat</string>
+    <string name="network_status">Network Status</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="event_history">Event History</string>
+    <string name="live_camera_feed">Live Camera Feed</string>
+    <string name="no_events">No events available yet.</string>
+</resources>
