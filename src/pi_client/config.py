@@ -70,6 +70,14 @@ class PiClientConfig:
             raise ValueError("GATEWAY_BASE_URL is required.")
         if not self.provisioning_token:
             raise ValueError("PI_PROVISIONING_TOKEN is required.")
+        if _looks_like_placeholder_url(self.base_url):
+            raise ValueError(
+                "GATEWAY_BASE_URL is still using a placeholder value. Set it to your real gateway URL."
+            )
+        if _looks_like_placeholder_token(self.provisioning_token):
+            raise ValueError(
+                "PI_PROVISIONING_TOKEN is still using a placeholder value. Set it to a real provisioning token."
+            )
         if self.request_timeout_secs <= 0:
             raise ValueError("PI_REQUEST_TIMEOUT_SECS must be > 0.")
         if self.heartbeat_interval_secs <= 0:
@@ -125,3 +133,17 @@ def load_config_from_env() -> PiClientConfig:
     )
     config.validate()
     return config
+
+
+def _looks_like_placeholder_url(value: str) -> bool:
+    text = value.strip().lower()
+    return not text or "example.com" in text or text.endswith("/example")
+
+
+def _looks_like_placeholder_token(value: str) -> bool:
+    text = value.strip().lower()
+    return (
+        not text
+        or "replace-with" in text
+        or text in {"changeme", "change-me", "placeholder", "token"}
+    )

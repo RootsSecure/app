@@ -28,7 +28,7 @@ class OfflineActionQueue:
 
     def _setup(self) -> None:
         with self._conn:
-            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._enable_journal_mode()
             self._conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS offline_actions (
@@ -41,6 +41,13 @@ class OfflineActionQueue:
                 )
                 """
             )
+
+    def _enable_journal_mode(self) -> None:
+        try:
+            self._conn.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.OperationalError:
+            # Some Windows filesystems and sandboxed environments reject WAL.
+            self._conn.execute("PRAGMA journal_mode=DELETE")
 
     def enqueue(self, action_type: str, payload: dict[str, Any]) -> None:
         now = datetime.now(timezone.utc).isoformat()

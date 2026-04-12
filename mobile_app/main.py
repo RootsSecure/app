@@ -1,7 +1,7 @@
 ﻿from __future__ import annotations
 
 import logging
-from dataclasses import asdict
+from pathlib import Path
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -17,7 +17,7 @@ from app.network.offline_queue import OfflineActionQueue
 from app.security.secure_store import SecureStore
 from app.services.monitoring_service import MonitoringService
 
-KV_PATH = "app/ui/main.kv"
+KV_PATH = Path(__file__).resolve().parent / "app" / "ui" / "main.kv"
 
 
 class LoginScreen(Screen):
@@ -63,7 +63,7 @@ class NriSentinelMobileApp(App):
             logger=self._logger,
         )
 
-        Builder.load_file(KV_PATH)
+        Builder.load_file(str(KV_PATH))
         root = RootScreen()
 
         if self._auth.access_token():

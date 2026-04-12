@@ -1,95 +1,62 @@
-﻿# NRI Plot Sentinel Raspberry Pi Gateway Client
+# NRI Plot Sentinel App Workspace
 
-Secure Raspberry Pi service for remote vacant-property monitoring. The client bootstraps with a provisioning token, obtains a gateway session token, sends periodic heartbeats, and uploads normalized camera events with offline buffering.
+This repository contains the non-web application pieces for the NRI Plot Sentinel system:
 
-## What This Service Does
+- `android_app/` Android client written in Kotlin
+- `mobile_app/` Python mobile-oriented client prototype
+- `src/pi_client/` Raspberry Pi gateway client
+- `deploy/` deployment assets for the Pi service
 
-- Uses dedicated gateway endpoints only:
-  - `POST /api/v1/gateway/raspberry-pi/connect`
-  - `POST /api/v1/gateway/raspberry-pi/devices/{device_id}/heartbeat`
-  - `POST /api/v1/gateway/raspberry-pi/devices/{device_id}/events`
-- Uses provisioning token only for bootstrap/reconnect.
-- Stores session token + device ID locally with restrictive file permissions (Linux chmod `600`).
-- Reconnects automatically when token expires or API returns `401`.
-- Sends fixed-interval heartbeat with network status, power status, battery level, and metadata.
-- Buffers unsent events in a local SQLite queue during connectivity issues and retries with backoff.
-- Keeps modules separated for camera detection source, event classification, token management, queueing, and HTTP transport.
+The accidental Vite/React website files have been removed so this folder reflects the app workspace again.
+
+## Raspberry Pi Client
+
+The Pi client bootstraps with a provisioning token, obtains a gateway session token, sends periodic heartbeats, and uploads normalized camera events with offline buffering.
+
+### Setup
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+set PYTHONPATH=src
+python -m pi_client.main
+```
+
+Key modules:
+
+- `src/pi_client/session_manager.py` bootstrap and reconnect logic
+- `src/pi_client/heartbeat_sender.py` heartbeat loop
+- `src/pi_client/event_uploader.py` event delivery and queue draining
+- `src/pi_client/event_queue.py` local offline queue
+- `src/pi_client/api_transport.py` HTTPS transport and retry boundaries
+
+## Mobile Python App
+
+The Python mobile prototype entry point is `mobile_app/main.py`. Install its dependencies with:
+
+```bash
+pip install -r mobile_app/requirements.txt
+```
+
+`Kivy` currently needs Python 3.13 or lower on Windows in this workspace.
+
+## Android App
+
+The Android client source is under `android_app/app/src/main/`.
+
+Open `android_app/` in Android Studio or use a local Gradle installation to build it. This repository does not currently include a Gradle wrapper.
 
 ## Project Layout
 
-- `src/pi_client/session_manager.py` bootstrap and reconnect logic.
-- `src/pi_client/heartbeat_sender.py` heartbeat loop.
-- `src/pi_client/event_uploader.py` event delivery and queue draining.
-- `src/pi_client/event_queue.py` local offline queue.
-- `src/pi_client/camera_adapter.py` detection source adapter.
-- `src/pi_client/event_classifier.py` normalization into backend schema.
-- `src/pi_client/api_transport.py` HTTPS transport with timeouts and structured errors.
-
-## Setup
-
-1. Install dependencies.
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+```text
+app/
+|-- android_app/
+|-- deploy/
+|-- mobile_app/
+|-- src/pi_client/
+|-- .env.example
+|-- pyproject.toml
+`-- requirements.txt
 ```
-
-2. Configure environment.
-
-```bash
-cp .env.example .env
-# edit .env with real API base URL and provisioning token
-```
-
-3. Run service manually.
-
-```bash
-PYTHONPATH=src python -m pi_client.main
-```
-
-## Registering the Pi with Backend
-
-1. Set `PI_PROVISIONING_TOKEN` and `GATEWAY_BASE_URL` in `.env`.
-2. Ensure `PI_HARDWARE_ID` is set or let the service auto-derive a stable one.
-3. Start the service. It calls `POST /connect` and stores returned session state at `PI_SESSION_STATE_PATH`.
-4. After connect succeeds, heartbeat and events use the returned session token only.
-
-## Camera Detection Input Contract
-
-The default adapter tails `PI_CAMERA_EVENTS_PATH` (`jsonl`). Append one JSON object per line from your camera detector process.
-
-Example line:
-
-```json
-{"vendor_event_id":"cam-evt-1001","occurred_at":"2026-04-08T12:30:00Z","event_type":"person","confidence":0.94,"metadata":{"zone":"gate"},"media_refs":["/var/lib/nri-plot-sentinel-pi/media/frame-1001.jpg"]}
-```
-
-The classifier normalizes this to backend event fields:
-
-- `alert_type`
-- `vendor_event_id`
-- `occurred_at`
-- `metadata_json`
-- `media_refs`
-
-## Running as systemd Service (Raspberry Pi)
-
-```bash
-sudo cp deploy/nri-plot-sentinel-pi.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable nri-plot-sentinel-pi
-sudo systemctl start nri-plot-sentinel-pi
-sudo systemctl status nri-plot-sentinel-pi
-```
-
-Make sure:
-
-- `WorkingDirectory` and `EnvironmentFile` in the unit match your install path.
-- `.env` has production values.
-- outbound HTTPS to the gateway is allowed.
-
-## Notes
-
-- `camera_capture.py` contains an optional `PiCameraCapture` wrapper using `picamera2` when you need local snapshot capture.
-- `JsonlCameraAdapter` intentionally decouples detection from transport, so you can plug in OpenCV, Edge TPU, or another detector process without changing gateway logic.

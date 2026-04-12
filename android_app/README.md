@@ -4,7 +4,7 @@ Kotlin Android app scaffolded with MVVM, Retrofit, Gson, ViewModel, and LiveData
 
 ## Update Before Running
 
-Open [build.gradle.kts](D:/RootsSecure_app/android_app/app/build.gradle.kts) and replace:
+Open `app/build.gradle.kts` and replace:
 
 - `BASE_URL`
 - `API_HOST`
