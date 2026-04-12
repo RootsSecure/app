@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import threading
 from datetime import datetime, timedelta, timezone
@@ -27,8 +27,13 @@ class AuthManager:
 
     def access_token(self) -> str | None:
         with self._lock:
+            if not self._state.get("access_token") or not self._state.get("refresh_token"):
+                return None
             if self._is_access_token_stale_locked():
-                self._refresh_locked()
+                try:
+                    self._refresh_locked()
+                except Exception:
+                    return None
             token = self._state.get("access_token")
             return str(token) if token else None
 
