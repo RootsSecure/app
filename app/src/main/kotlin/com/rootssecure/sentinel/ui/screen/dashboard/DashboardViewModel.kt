@@ -33,7 +33,7 @@ class DashboardViewModel @Inject constructor(
                 nodeStatus       = status,
                 latestHeartbeat  = history.firstOrNull(),
                 heartbeatHistory = history.reversed()   // oldest first for charts
-            )
+            ) as DashboardUiState
         }
         .catch { e ->
             emit(DashboardUiState.Error(e.message ?: "Unknown error"))

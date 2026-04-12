@@ -30,13 +30,13 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
-        android:theme="@style/Theme.NRIPlotSentinel"
+        android:theme="@style/Theme.Sentinel"
         android:hardwareAccelerated="true">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.NRIPlotSentinel"
+            android:theme="@style/Theme.Sentinel"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

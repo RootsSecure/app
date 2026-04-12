@@ -21,7 +21,7 @@ class TimelineViewModel @Inject constructor(
 
     val uiState: StateFlow<TimelineUiState> =
         getActiveAlerts()
-            .map { TimelineUiState.Success(it) }
+            .map { TimelineUiState.Success(it) as TimelineUiState }
             .catch { emit(TimelineUiState.Error(it.message ?: "Unknown error")) }
             .stateIn(
                 scope        = viewModelScope,

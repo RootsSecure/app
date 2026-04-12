@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">RootsSecure Sentinel</string>
+    <string name="app_name">RootsSecure</string>
     
     <!-- Notification Channels -->
     <string name="channel_name">Sentinel Alerts</string>
