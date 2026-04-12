@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RootsSecure Sentinel</string>
+    
+    <!-- Notification Channels -->
+    <string name="channel_name">Sentinel Alerts</string>
+    <string name="channel_description">High priority security alerts from your NRI Plot Sentinel.</string>
+</resources>

@@ -1,0 +1,46 @@
+package com.rootssecure.sentinel
+
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import com.rootssecure.sentinel.data.mqtt.MqttService
+import com.rootssecure.sentinel.ui.navigation.AppNavHost
+import com.rootssecure.sentinel.ui.theme.SentinelTheme
+import dagger.hilt.android.AndroidEntryPoint
+
+/**
+ * Single-activity host for the entire Compose navigation graph.
+ *
+ * Responsibilities:
+ * - Configures edge-to-edge display so Compose controls the system bar appearance.
+ * - Starts [MqttService] as a foreground service on first launch, keeping the
+ *   MQTT connection alive even if the user navigates away.
+ * - Hands off all UI rendering to [AppNavHost].
+ */
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        startMqttService()
+
+        setContent {
+            SentinelTheme {
+                AppNavHost()
+            }
+        }
+    }
+
+    private fun startMqttService() {
+        val intent = Intent(this, MqttService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+}

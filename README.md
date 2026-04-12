@@ -1,62 +1,44 @@
-# NRI Plot Sentinel App Workspace
+# RootsSecure Native (NRI Plot Sentinel)
 
-This repository contains the non-web application pieces for the NRI Plot Sentinel system:
+RootsSecure is a high-performance, native Android command center for the NRI Plot Sentinel Edge AI system. It implements a "local-first" architecture, communicating directly with Raspberry Pi Edge Nodes via MQTT to ensure maximum privacy, speed, and offline capability.
 
-- `android_app/` Android client written in Kotlin
-- `mobile_app/` Python mobile-oriented client prototype
-- `src/pi_client/` Raspberry Pi gateway client
-- `deploy/` deployment assets for the Pi service
+## 🚀 Key Features
+- **Local-First Engineering**: No reliance on centralized cloud servers. Direct RPi-to-Mobile communication.
+- **Digital Panopticon UI**: Premium "Obsidian & Neon Teal" glassmorphism dashboard built with Jetpack Compose.
+- **Real-Time Alert Engine**: Receives security events (JCB detection, illegal construction, encroachment) in <100ms via MQTT.
+- **Telemetry Visualizer**: Live hardware monitoring (CPU Temp, 4G Latency, Power Status).
+- **Foreground Alerting**: Persistent background service ensures you never miss a critical alert, even when the app is closed.
+- **BLE Provisioning**: Easy setup for new Edge Nodes over Bluetooth LE.
 
-The accidental Vite/React website files have been removed so this folder reflects the app workspace again.
+## 🛠 Tech Stack
+- **Language**: 100% Kotlin
+- **UI Framework**: Jetpack Compose (Material 3)
+- **Architecture**: Clean Architecture (MVVM + Domain Layer)
+- **Dependency Injection**: Hilt
+- **Local Database**: Room (with Flow-based reactive updates)
+- **Networking**: HiveMQ MQTT Client & Kotlin Serialization
+- **Image Loading**: Coil 3
+- **Async**: Coroutines & Flow
 
-## Raspberry Pi Client
-
-The Pi client bootstraps with a provisioning token, obtains a gateway session token, sends periodic heartbeats, and uploads normalized camera events with offline buffering.
-
-### Setup
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-set PYTHONPATH=src
-python -m pi_client.main
-```
-
-Key modules:
-
-- `src/pi_client/session_manager.py` bootstrap and reconnect logic
-- `src/pi_client/heartbeat_sender.py` heartbeat loop
-- `src/pi_client/event_uploader.py` event delivery and queue draining
-- `src/pi_client/event_queue.py` local offline queue
-- `src/pi_client/api_transport.py` HTTPS transport and retry boundaries
-
-## Mobile Python App
-
-The Python mobile prototype entry point is `mobile_app/main.py`. Install its dependencies with:
-
-```bash
-pip install -r mobile_app/requirements.txt
-```
-
-`Kivy` currently needs Python 3.13 or lower on Windows in this workspace.
-
-## Android App
-
-The Android client source is under `android_app/app/src/main/`.
-
-Open `android_app/` in Android Studio or use a local Gradle installation to build it. This repository does not currently include a Gradle wrapper.
-
-## Project Layout
-
+## 📂 Project Structure
 ```text
-app/
-|-- android_app/
-|-- deploy/
-|-- mobile_app/
-|-- src/pi_client/
-|-- .env.example
-|-- pyproject.toml
-`-- requirements.txt
+app/src/main/kotlin/com/rootssecure/sentinel/
+├── data/           # Repositories, DAOs, Entities, MQTT Service, DTOs
+├── domain/         # Pure Kotlin models, Repository interfaces, UseCases
+├── di/             # Hilt Dependency Injection modules
+└── ui/             # Compose Screens, ViewModels, Themes, Navigation
 ```
+
+## ⚙️ Development Setup
+1. Open the project in **Android Studio Iguana** or newer.
+2. Ensure **JDK 17** is configured.
+3. Sync Gradle and build the APK.
+4. (Optional) Configure your Pi's MQTT broker IP in `MqttConfig.kt` or via the in-app Provisioning screen.
+
+## 📡 MQTT Contract
+The app listens on the following topics:
+- `sentinel/+/alerts`: Security event payloads (JSON).
+- `sentinel/+/heartbeat`: Hourly hardware health snapshots.
+
+---
+© 2026 RootsSecure. All Rights Reserved.
