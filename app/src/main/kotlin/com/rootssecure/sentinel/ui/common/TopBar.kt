@@ -25,16 +25,10 @@ fun TopBar(
             .statusBarsPadding()
             .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
-        Text(
-            text = "ROOTSSECURE",
-            style = MaterialTheme.typography.labelSmall,
-            color = TealPrimary,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified // use default or zero
-        )
+        // Brand/Page Title only to avoid redundancy
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.displaySmall,
             color = OnBackground,
             fontWeight = FontWeight.ExtraBold
         )

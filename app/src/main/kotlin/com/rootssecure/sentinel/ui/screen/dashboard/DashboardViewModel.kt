@@ -18,21 +18,27 @@ import javax.inject.Inject
  *
  * Derives [uiState] by combining the heartbeat history and real-time status flows.
  */
+import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
+
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val getHeartbeatHistory: GetHeartbeatHistoryUseCase,
-    private val getEdgeNodeStatus: GetEdgeNodeStatusUseCase
+    private val getEdgeNodeStatus: GetEdgeNodeStatusUseCase,
+    private val devSettings: DeveloperSettingsRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<DashboardUiState> =
         combine(
             getHeartbeatHistory(),
-            getEdgeNodeStatus()
-        ) { history, status ->
+            getEdgeNodeStatus(),
+            devSettings.isDeveloperModeEnabled
+        ) { history, status, devMode ->
+            val filteredHistory = if (devMode) history else history.filter { !it.isMock }
+            
             DashboardUiState.Success(
                 nodeStatus       = status,
-                latestHeartbeat  = history.firstOrNull(),
-                heartbeatHistory = history.reversed()   // oldest first for charts
+                latestHeartbeat  = filteredHistory.firstOrNull(),
+                heartbeatHistory = filteredHistory.reversed()
             ) as DashboardUiState
         }
         .catch { e ->

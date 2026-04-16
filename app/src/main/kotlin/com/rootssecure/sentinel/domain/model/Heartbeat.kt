@@ -7,6 +7,10 @@ data class Heartbeat(
     val cpuTempC: Double,
     val networkLatencyMs: Int,
     val powerStatus: PowerStatus,
+    val ramUsagePercent: Double,
+    val storageUsagePercent: Double,
+    val batteryPercent: Int,
+    val isMock: Boolean,
     val recordedAt: Instant
 )
 

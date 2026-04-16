@@ -24,6 +24,10 @@ class HeartbeatRepositoryImpl @Inject constructor(
         cpuTempC         = cpuTempC,
         networkLatencyMs = networkLatencyMs,
         powerStatus      = PowerStatus.fromString(powerStatus),
+        ramUsagePercent   = ramUsagePercent,
+        storageUsagePercent = storageUsagePercent,
+        batteryPercent    = batteryPercent,
+        isMock           = isMock,
         recordedAt       = Instant.ofEpochMilli(recordedAt)
     )
 }

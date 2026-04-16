@@ -3,6 +3,6 @@
     <string name="app_name">RootsSecure</string>
     
     <!-- Notification Channels -->
-    <string name="channel_name">Sentinel Alerts</string>
-    <string name="channel_description">High priority security alerts from your NRI Plot Sentinel.</string>
+    <string name="channel_name">RootsSecure Alerts</string>
+    <string name="channel_description">High priority security alerts from your RootsSecure Node.</string>
 </resources>

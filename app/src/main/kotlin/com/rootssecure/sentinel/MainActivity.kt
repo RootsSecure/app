@@ -9,6 +9,11 @@ import androidx.activity.enableEdgeToEdge
 import com.rootssecure.sentinel.data.mqtt.MqttService
 import com.rootssecure.sentinel.ui.navigation.AppNavHost
 import com.rootssecure.sentinel.ui.theme.SentinelTheme
+import androidx.lifecycle.lifecycleScope
+import com.rootssecure.sentinel.data.mqtt.MockTelemetrySimulator
+import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -23,10 +28,21 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject lateinit var devSettings: DeveloperSettingsRepository
+    @Inject lateinit var simulator: MockTelemetrySimulator
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         startMqttService()
+        
+        // Handle Developer Mode simulation
+        lifecycleScope.launch {
+            devSettings.isDeveloperModeEnabled.collect { enabled ->
+                if (enabled) simulator.startSimulation()
+                else simulator.stopSimulation()
+            }
+        }
 
         setContent {
             SentinelTheme {

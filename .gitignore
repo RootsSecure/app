@@ -37,3 +37,9 @@ __pycache__/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Android/Kotlin Build
+.gradle/
+.kotlin/
+build/
+app/build/

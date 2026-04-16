@@ -6,20 +6,23 @@ import com.rootssecure.sentinel.data.local.dao.AlertEventDao
 import com.rootssecure.sentinel.data.local.dao.HeartbeatDao
 import com.rootssecure.sentinel.data.local.entity.AlertEventEntity
 import com.rootssecure.sentinel.data.local.entity.HeartbeatEntity
+import com.rootssecure.sentinel.data.local.entity.PropertyInfoEntity
+import com.rootssecure.sentinel.data.local.entity.PropertyDao
 
 /**
  * Root Room database declaration.
- *
- * [version] must be incremented whenever the schema changes. Pair with a
- * [androidx.room.migration.Migration] to preserve existing data, or use
- * [fallbackToDestructiveMigration] during development.
  */
 @Database(
-    entities  = [AlertEventEntity::class, HeartbeatEntity::class],
-    version   = 1,
+    entities  = [
+        AlertEventEntity::class, 
+        HeartbeatEntity::class,
+        PropertyInfoEntity::class
+    ],
+    version   = 3,
     exportSchema = true
 )
 abstract class SentinelDatabase : RoomDatabase() {
     abstract fun alertEventDao(): AlertEventDao
     abstract fun heartbeatDao(): HeartbeatDao
+    abstract fun propertyDao(): PropertyDao
 }

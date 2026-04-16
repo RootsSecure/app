@@ -12,20 +12,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rootssecure.sentinel.domain.model.EdgeNodeStatus
-import com.rootssecure.sentinel.domain.model.Heartbeat
 import com.rootssecure.sentinel.domain.model.PowerStatus
 import com.rootssecure.sentinel.ui.common.StatusDot
 import com.rootssecure.sentinel.ui.common.TopBar
 import com.rootssecure.sentinel.ui.screen.dashboard.components.CpuTempGauge
 import com.rootssecure.sentinel.ui.screen.dashboard.components.MetricCard
-import com.rootssecure.sentinel.ui.screen.dashboard.components.PowerStatusCard
-import com.rootssecure.sentinel.ui.theme.Background
-import com.rootssecure.sentinel.ui.theme.CriticalRed
-import com.rootssecure.sentinel.ui.theme.OnBackground
-import com.rootssecure.sentinel.ui.theme.SafeGreen
-import com.rootssecure.sentinel.ui.theme.TealPrimary
+import com.rootssecure.sentinel.ui.theme.*
+import androidx.compose.material3.Surface
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material3.Icon
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
@@ -36,7 +36,13 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
             .fillMaxSize()
             .background(Background)
     ) {
-        TopBar(title = "Edge Node Monitor")
+        val title = if (state is DashboardUiState.Success && (state as DashboardUiState.Success).latestHeartbeat == null) {
+            "Device Status"
+        } else {
+            "ROOTSSECURE"
+        }
+        
+        TopBar(title = title)
 
         AnimatedContent(targetState = state, label = "dashboard_state") { uiState ->
             when (uiState) {
@@ -50,64 +56,130 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
 
 @Composable
 private fun DashboardContent(state: DashboardUiState.Success) {
+    val hb = state.latestHeartbeat
+
     Column(
         modifier          = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        // ── Status row ───────────────────────────────────────────────────────
-        Row(
-            modifier       = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            StatusDot(
-                online = state.nodeStatus is EdgeNodeStatus.Online,
-                modifier = Modifier.size(10.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text  = when (state.nodeStatus) {
-                    is EdgeNodeStatus.Online     -> "Edge Node Online"
-                    is EdgeNodeStatus.Stale      -> "No Recent Heartbeat"
-                    is EdgeNodeStatus.Offline    -> "Edge Node Offline"
-                    is EdgeNodeStatus.Connecting -> "Connecting…"
-                },
-                style = MaterialTheme.typography.labelLarge,
-                color = when (state.nodeStatus) {
-                    is EdgeNodeStatus.Online     -> SafeGreen
-                    is EdgeNodeStatus.Connecting -> TealPrimary
-                    else                         -> CriticalRed
+        if (hb == null) {
+            // ── Disconnected State Focus ───────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = "No Device Connected",
+                        modifier = Modifier.size(100.dp),
+                        tint = TealPrimary
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "No Device Connected",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-            )
-        }
-
-        // ── CPU Temperature ──────────────────────────────────────────────────
-        val heartbeat = state.latestHeartbeat
-        if (heartbeat != null) {
-            CpuTempGauge(
-                currentTemp = heartbeat.cpuTempC,
-                history     = state.heartbeatHistory.map { it.cpuTempC.toFloat() }
-            )
-
-            MetricCard(
-                label    = "Network Latency",
-                value    = "${heartbeat.networkLatencyMs}",
-                unit     = "ms",
-                subtitle = if (heartbeat.networkLatencyMs > 150) "4G Signal Degraded" else "4G Signal Strong",
-                isWarning = heartbeat.networkLatencyMs > 150
-            )
-
-            PowerStatusCard(
-                powerStatus = heartbeat.powerStatus
-            )
+            }
         } else {
-            Text(
-                text  = "Waiting for first heartbeat from Pi…",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnBackground.copy(alpha = 0.6f)
-            )
+            // ── Editorial Header ──────────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = "System secure.",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = OnBackground,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusDot(
+                    online = state.nodeStatus is EdgeNodeStatus.Online,
+                    modifier = Modifier.size(12.dp).padding(bottom = 12.dp)
+                )
+            }
+
+            // ── Primary Status Metric (Asymmetric) ───────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                // Focus: CPU Temperature with History
+                Box(modifier = Modifier.weight(1.2f)) {
+                    CpuTempGauge(
+                        currentTemp = hb.cpuTempC,
+                        history     = state.heartbeatHistory.map { it.cpuTempC.toFloat() }
+                    )
+                }
+
+                // Focus: Network Latency
+                Column(
+                    modifier = Modifier.weight(0.8f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    MetricCard(
+                        label    = "LATENCY",
+                        value    = "${hb.networkLatencyMs}",
+                        unit     = "ms",
+                        subtitle = "4G Lora Uplink",
+                        isWarning = hb.networkLatencyMs > 150
+                    )
+                    MetricCard(
+                        label    = "POWER",
+                        value    = if (hb.powerStatus is PowerStatus.DirectPower) "AC" else "BAT",
+                        unit     = "",
+                        subtitle = if (hb.powerStatus is PowerStatus.DirectPower) "Stable" else "Fallback",
+                        isWarning = hb.powerStatus is PowerStatus.BatteryFallback
+                    )
+                }
+            }
+
+            // ── Quick Access Health Snapshot ─────────────────────────────────────
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "NODE RESOURCES",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    letterSpacing = 1.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ResourceMiniCard(label = "RAM", value = "${hb.ramUsagePercent.toInt()}%", modifier = Modifier.weight(1f))
+                    ResourceMiniCard(label = "DISK", value = "${hb.storageUsagePercent.toInt()}%", modifier = Modifier.weight(1f))
+                    ResourceMiniCard(label = "BATT", value = "${hb.batteryPercent}%", modifier = Modifier.weight(1f))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun ResourceMiniCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        color = SurfaceContainer,
+        shape = SentinelShapes.extraSmall,
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+            Text(text = value, style = MaterialTheme.typography.titleMedium, color = OnBackground, fontWeight = FontWeight.Bold)
         }
     }
 }

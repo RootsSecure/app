@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rootssecure.sentinel.ui.common.TopBar
 import com.rootssecure.sentinel.ui.screen.timeline.components.AlertCard
@@ -74,6 +75,23 @@ fun TimelineScreen(
                             contentPadding     = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            item {
+                                Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                                    Text(
+                                        text  = "SITE MONITORAL STATUS",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = com.rootssecure.sentinel.ui.theme.TealPrimary,
+                                        letterSpacing = 1.sp
+                                    )
+                                    Text(
+                                        text  = "Monitoring construction progress and security. Real-time detection of site personnel and heavy machinery.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = OnBackground.copy(alpha = 0.7f),
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
+
                             items(
                                 items = uiState.alerts,
                                 key   = { it.id }

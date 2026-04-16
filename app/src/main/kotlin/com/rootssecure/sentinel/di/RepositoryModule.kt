@@ -1,8 +1,10 @@
 package com.rootssecure.sentinel.di
 
 import com.rootssecure.sentinel.data.repository.AlertRepositoryImpl
+import com.rootssecure.sentinel.data.repository.DeveloperSettingsRepositoryImpl
 import com.rootssecure.sentinel.data.repository.HeartbeatRepositoryImpl
 import com.rootssecure.sentinel.domain.repository.AlertRepository
+import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
 import com.rootssecure.sentinel.domain.repository.HeartbeatRepository
 import dagger.Binds
 import dagger.Module
@@ -22,4 +24,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHeartbeatRepository(impl: HeartbeatRepositoryImpl): HeartbeatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDeveloperSettingsRepository(impl: DeveloperSettingsRepositoryImpl): DeveloperSettingsRepository
 }

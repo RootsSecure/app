@@ -40,11 +40,7 @@ fun CpuTempGauge(
 
     GlassCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier          = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
+            Column {
                 Text(
                     text  = "${currentTemp.toInt()}°C",
                     style = SentinelTypography.displayMedium.copy(
@@ -53,9 +49,10 @@ fun CpuTempGauge(
                     )
                 )
                 Text(
-                    text  = if (currentTemp > 80) "⚠ CRITICAL" else "NORMAL",
-                    style = SentinelTypography.labelMedium,
-                    color = color
+                    text  = if (currentTemp > 80) "⚠ CRITICAL TEMPERATURE" else "System Temperature: NORMAL",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = color,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
 

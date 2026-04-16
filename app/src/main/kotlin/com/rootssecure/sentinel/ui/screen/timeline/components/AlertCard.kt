@@ -38,18 +38,7 @@ fun AlertCard(
             .clickable { onClick() }
     ) {
         Column {
-            // ── Visual Evidence Image ─────────────────────────────────────────
-            if (alert.imageUrl.isNotBlank()) {
-                AsyncImage(
-                    model             = alert.imageUrl,
-                    contentDescription = "Visual evidence: ${alert.title}",
-                    contentScale      = ContentScale.Crop,
-                    modifier          = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(SentinelShapes.medium)
-                )
-            }
+            // Visual evidence removed per user request for a cleaner message-only list
 
             // ── Card Body ─────────────────────────────────────────────────────
             Row(
@@ -64,7 +53,7 @@ fun AlertCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        SeverityBadge(severity = alert.severity)
+                        // SeverityBadge removed per user request
                         if (alert.isFlagged) {
                             Text(
                                 text  = "False Alarm",

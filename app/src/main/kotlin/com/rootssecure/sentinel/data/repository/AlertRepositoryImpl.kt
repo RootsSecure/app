@@ -41,6 +41,7 @@ class AlertRepositoryImpl @Inject constructor(
         severity   = AlertSeverity.fromString(logicLevel),
         occurredAt = Instant.parse(occurredAt),
         imageUrl   = mediaRef,
-        isFlagged  = isFlagged
+        isFlagged  = isFlagged,
+        isMock     = isMock
     )
 }

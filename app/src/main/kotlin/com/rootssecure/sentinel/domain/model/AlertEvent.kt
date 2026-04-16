@@ -15,5 +15,6 @@ data class AlertEvent(
     val severity: AlertSeverity,
     val occurredAt: Instant,
     val imageUrl: String,       // media_refs[0] — the 1080p visual proof frame
-    val isFlagged: Boolean      // true if user marked as false alarm
+    val isFlagged: Boolean,     // true if user marked as false alarm
+    val isMock: Boolean
 )

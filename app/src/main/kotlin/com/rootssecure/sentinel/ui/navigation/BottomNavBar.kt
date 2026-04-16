@@ -11,51 +11,42 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.rootssecure.sentinel.ui.theme.Background
-import com.rootssecure.sentinel.ui.theme.GlassBorder
 import com.rootssecure.sentinel.ui.theme.OnSurfaceVariant
 import com.rootssecure.sentinel.ui.theme.SurfaceContainer
 import com.rootssecure.sentinel.ui.theme.TealPrimary
 
 private data class NavItem(
-    val route: String,
     val label: String,
     val icon: ImageVector
 )
 
 private val navItems = listOf(
-    NavItem(Screen.Dashboard.route,    "Dashboard", Icons.Filled.Dashboard),
-    NavItem(Screen.Timeline.route,     "Alerts",    Icons.Filled.NotificationsActive),
-    NavItem(Screen.Provisioning.route, "Setup",     Icons.Filled.Settings)
+    NavItem("Dashboard", Icons.Filled.Dashboard),
+    NavItem("Health",    Icons.Filled.Analytics),
+    NavItem("Alerts",    Icons.Filled.NotificationsActive),
+    NavItem("Settings",  Icons.Filled.Settings)
 )
 
 @Composable
-fun BottomNavBar(navController: NavController) {
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute   = backStackEntry?.destination?.route
-
+fun BottomNavBar(
+    activePageIndex: Int,
+    onTabSelected: (Int) -> Unit
+) {
     NavigationBar(
         containerColor = SurfaceContainer,
         tonalElevation = androidx.compose.ui.unit.Dp.Unspecified
     ) {
-        navItems.forEach { item ->
-            val selected = currentRoute == item.route
+        navItems.forEachIndexed { index, item ->
+            val selected = activePageIndex == index
             NavigationBarItem(
                 selected = selected,
                 onClick  = {
                     if (!selected) {
-                        navController.navigate(item.route) {
-                            popUpTo(Screen.Dashboard.route) { saveState = true }
-                            launchSingleTop = true
-                            restoreState    = true
-                        }
+                        onTabSelected(index)
                     }
                 },
                 icon = {

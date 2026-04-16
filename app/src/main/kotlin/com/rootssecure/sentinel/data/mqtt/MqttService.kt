@@ -290,13 +290,18 @@ class MqttService : Service() {
         logicLevel    = metadataJson.logicLevel,
         motionRatio   = metadataJson.motionRatio,
         mediaRef      = mediaRefs.firstOrNull() ?: "",
-        receivedAt    = Instant.now().toEpochMilli()
+        receivedAt    = Instant.now().toEpochMilli(),
+        isMock        = false
     )
 
     private fun HeartbeatDto.toEntity() = HeartbeatEntity(
         cpuTempC          = cpuTempC,
         networkLatencyMs  = networkLatencyMs,
         powerStatus       = powerStatus,
+        ramUsagePercent    = ramUsagePercent,
+        storageUsagePercent = storageUsagePercent,
+        batteryPercent     = batteryPercent,
+        isMock            = false,
         recordedAt        = Instant.now().toEpochMilli()
     )
 

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.rootssecure.sentinel.data.local.dao.AlertEventDao
 import com.rootssecure.sentinel.data.local.dao.HeartbeatDao
+import com.rootssecure.sentinel.data.local.entity.PropertyDao
 import com.rootssecure.sentinel.data.local.db.SentinelDatabase
 import dagger.Module
 import dagger.Provides
@@ -28,4 +29,7 @@ object DatabaseModule {
 
     @Provides
     fun provideHeartbeatDao(db: SentinelDatabase): HeartbeatDao = db.heartbeatDao()
+
+    @Provides
+    fun providePropertyDao(db: SentinelDatabase): PropertyDao = db.propertyDao()
 }

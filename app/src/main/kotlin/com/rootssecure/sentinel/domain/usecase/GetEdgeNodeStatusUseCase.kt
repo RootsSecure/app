@@ -2,8 +2,9 @@ package com.rootssecure.sentinel.domain.usecase
 
 import com.rootssecure.sentinel.domain.model.EdgeNodeStatus
 import com.rootssecure.sentinel.domain.repository.HeartbeatRepository
+import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -13,9 +14,16 @@ import javax.inject.Inject
  * This is used by the Dashboard to show the green/red status light.
  */
 class GetEdgeNodeStatusUseCase @Inject constructor(
-    private val repository: HeartbeatRepository
+    private val repository: HeartbeatRepository,
+    private val devSettings: DeveloperSettingsRepository
 ) {
-    operator fun invoke(): Flow<EdgeNodeStatus> = repository.observeLatest().map { latest ->
+    operator fun invoke(): Flow<EdgeNodeStatus> = combine(
+        repository.observeLast24(),
+        devSettings.isDeveloperModeEnabled
+    ) { history, devMode ->
+        val filtered = if (devMode) history else history.filter { !it.isMock }
+        val latest = filtered.firstOrNull()
+        
         when {
             latest == null -> EdgeNodeStatus.Connecting
             isRecent(latest.recordedAt.toEpochMilli()) -> EdgeNodeStatus.Online(latest.recordedAt.toEpochMilli())

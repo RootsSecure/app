@@ -13,15 +13,24 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
+import kotlinx.coroutines.flow.*
+
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
     private val getActiveAlerts: GetActiveAlertsUseCase,
-    private val flagAlert: FlagAlertUseCase
+    private val flagAlert: FlagAlertUseCase,
+    private val devSettings: DeveloperSettingsRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<TimelineUiState> =
-        getActiveAlerts()
-            .map { TimelineUiState.Success(it) as TimelineUiState }
+        combine(
+            getActiveAlerts(),
+            devSettings.isDeveloperModeEnabled
+        ) { alerts, devMode ->
+            val filtered = if (devMode) alerts else alerts.filter { !it.isMock }
+            TimelineUiState.Success(filtered) as TimelineUiState
+        }
             .catch { emit(TimelineUiState.Error(it.message ?: "Unknown error")) }
             .stateIn(
                 scope        = viewModelScope,
