@@ -55,7 +55,7 @@ private fun HealthContent(state: HealthUiState.Success) {
             Text(
                 text = "SYSTEM TELEMETRY",
                 style = MaterialTheme.typography.labelSmall,
-                color = TealPrimary,
+                color = ElectricViolet,
                 letterSpacing = 2.sp
             )
             Text(
@@ -70,17 +70,17 @@ private fun HealthContent(state: HealthUiState.Success) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(modifier = Modifier.weight(1f)) {
                 CpuTempGauge(
-                    currentTemp = hb.cpuTempC,
-                    history = state.history.map { it.cpuTempC.toFloat() }
+                    currentTemp = { hb.cpuTempC },
+                    history = { state.history.map { it.cpuTempC.toFloat() } }
                 )
             }
             Box(modifier = Modifier.weight(1f)) {
                 MetricCard(
                     label = "BATTERY",
-                    value = "${hb.batteryPercent}",
+                    value = { "${hb.batteryPercent}" },
                     unit = "%",
                     subtitle = if (hb.batteryPercent < 20) "Critically Low" else "Power Stable",
-                    isWarning = hb.batteryPercent < 20
+                    isWarning = { hb.batteryPercent < 20 }
                 )
             }
         }
@@ -90,19 +90,19 @@ private fun HealthContent(state: HealthUiState.Success) {
             Box(modifier = Modifier.weight(1f)) {
                 MetricCard(
                     label = "RAM USAGE",
-                    value = hb.ramUsagePercent.toInt().toString(),
+                    value = { hb.ramUsagePercent.toInt().toString() },
                     unit = "%",
                     subtitle = if (hb.ramUsagePercent > 85) "Memory Pressure" else "Memory Optimal",
-                    isWarning = hb.ramUsagePercent > 85
+                    isWarning = { hb.ramUsagePercent > 85 }
                 )
             }
             Box(modifier = Modifier.weight(1f)) {
                 MetricCard(
                     label = "STORAGE",
-                    value = hb.storageUsagePercent.toInt().toString(),
+                    value = { hb.storageUsagePercent.toInt().toString() },
                     unit = "%",
                     subtitle = if (hb.storageUsagePercent > 90) "Disk Nearly Full" else "Storage Available",
-                    isWarning = hb.storageUsagePercent > 90
+                    isWarning = { hb.storageUsagePercent > 90 }
                 )
             }
         }
@@ -110,10 +110,10 @@ private fun HealthContent(state: HealthUiState.Success) {
         // Latency and Signal
         MetricCard(
             label = "NETWORK LATENCY",
-            value = "${hb.networkLatencyMs}",
+            value = { "${hb.networkLatencyMs}" },
             unit = "ms",
             subtitle = "Active connection to Mosquitto MQTT",
-            isWarning = hb.networkLatencyMs > 200
+            isWarning = { hb.networkLatencyMs > 200 }
         )
 
         Spacer(modifier = Modifier.height(24.dp))

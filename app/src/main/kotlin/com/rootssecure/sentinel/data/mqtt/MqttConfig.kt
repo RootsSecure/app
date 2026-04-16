@@ -19,5 +19,5 @@ data class MqttConfig(
     val keepAliveSeconds: Int = 60,
     val cleanSession: Boolean = true,
     val connectTimeoutSeconds: Int = 10,
-    val reconnectDelay: Long = 5_000L   // ms before reconnect attempt
+    val reconnectDelay: Long = 2_000L   // ms before reconnect attempt (base backoff)
 )

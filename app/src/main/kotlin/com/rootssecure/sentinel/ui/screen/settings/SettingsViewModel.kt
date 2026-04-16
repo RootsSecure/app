@@ -26,16 +26,13 @@ class SettingsViewModel @Inject constructor(
     
     val uiState: StateFlow<SettingsUiState> = combine(
         _uiState,
-        devSettings.isDeveloperModeEnabled,
-        propertyDao.getPropertyInfo()
-    ) { state, devMode, property ->
+        devSettings.isDeveloperModeEnabled.distinctUntilChanged(),
+        propertyDao.getAllProperties()
+    ) { state, devMode, properties ->
         state.copy(
             isDeveloperMode = devMode,
-            propertyInfo    = property ?: PropertyInfoEntity(
-                propertyName = "My Property",
-                ownerName    = "Owner Name",
-                address      = "Property Address"
-            )
+            properties = properties,
+            activePropertyId = properties.firstOrNull { it.isActive }?.id ?: properties.firstOrNull()?.id
         )
     }.stateIn(
         viewModelScope, 
@@ -49,15 +46,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updatePropertyInfo(name: String, owner: String, address: String) {
+    fun addProperty() {
         viewModelScope.launch {
             propertyDao.updatePropertyInfo(
                 PropertyInfoEntity(
-                    propertyName = name,
-                    ownerName    = owner,
-                    address      = address
+                    propertyName = "New Property",
+                    ownerName = "Owner",
+                    address = "Address",
+                    mqttTopicId = "telemetry/new_property",
+                    isActive = false
                 )
             )
+        }
+    }
+
+    fun setActiveProperty(id: Int) {
+        viewModelScope.launch {
+            propertyDao.toggleActiveProperty(id)
+        }
+    }
+
+    fun updatePropertyInfo(property: PropertyInfoEntity) {
+        viewModelScope.launch {
+            propertyDao.updatePropertyInfo(property)
         }
     }
 }
@@ -65,9 +76,6 @@ class SettingsViewModel @Inject constructor(
 data class SettingsUiState(
     val mqttConfig: MqttConfig,
     val isDeveloperMode: Boolean = false,
-    val propertyInfo: PropertyInfoEntity = PropertyInfoEntity(
-        propertyName = "My Property",
-        ownerName    = "Owner Name",
-        address      = "Property Address"
-    )
+    val properties: List<PropertyInfoEntity> = emptyList(),
+    val activePropertyId: Int? = null
 )

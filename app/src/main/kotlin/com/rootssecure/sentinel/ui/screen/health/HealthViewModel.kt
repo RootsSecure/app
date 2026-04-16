@@ -18,7 +18,7 @@ class HealthViewModel @Inject constructor(
     val uiState: StateFlow<HealthUiState> =
         combine(
             getHeartbeatHistory(),
-            devSettings.isDeveloperModeEnabled
+            devSettings.isDeveloperModeEnabled.distinctUntilChanged()
         ) { history, devMode ->
             val filtered = if (devMode) history else history.filter { !it.isMock }
             

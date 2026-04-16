@@ -1,7 +1,6 @@
 package com.rootssecure.sentinel
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +11,7 @@ import com.rootssecure.sentinel.ui.theme.SentinelTheme
 import androidx.lifecycle.lifecycleScope
 import com.rootssecure.sentinel.data.mqtt.MockTelemetrySimulator
 import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,10 +38,12 @@ class MainActivity : ComponentActivity() {
         
         // Handle Developer Mode simulation
         lifecycleScope.launch {
-            devSettings.isDeveloperModeEnabled.collect { enabled ->
-                if (enabled) simulator.startSimulation()
-                else simulator.stopSimulation()
-            }
+            devSettings.isDeveloperModeEnabled
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    if (enabled) simulator.startSimulation()
+                    else simulator.stopSimulation()
+                }
         }
 
         setContent {
@@ -53,10 +55,6 @@ class MainActivity : ComponentActivity() {
 
     private fun startMqttService() {
         val intent = Intent(this, MqttService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
+        startForegroundService(intent)
     }
 }

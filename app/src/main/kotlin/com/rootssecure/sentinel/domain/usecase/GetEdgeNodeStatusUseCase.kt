@@ -4,6 +4,7 @@ import com.rootssecure.sentinel.domain.model.EdgeNodeStatus
 import com.rootssecure.sentinel.domain.repository.HeartbeatRepository
 import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -19,16 +20,17 @@ class GetEdgeNodeStatusUseCase @Inject constructor(
 ) {
     operator fun invoke(): Flow<EdgeNodeStatus> = combine(
         repository.observeLast24(),
-        devSettings.isDeveloperModeEnabled
+        devSettings.isDeveloperModeEnabled.distinctUntilChanged()
     ) { history, devMode ->
         val filtered = if (devMode) history else history.filter { !it.isMock }
         val latest = filtered.firstOrNull()
         
-        when {
+        val status: EdgeNodeStatus = when {
             latest == null -> EdgeNodeStatus.Connecting
             isRecent(latest.recordedAt.toEpochMilli()) -> EdgeNodeStatus.Online(latest.recordedAt.toEpochMilli())
             else -> EdgeNodeStatus.Stale
         }
+        status
     }
 
     private fun isRecent(epochMs: Long): Boolean {

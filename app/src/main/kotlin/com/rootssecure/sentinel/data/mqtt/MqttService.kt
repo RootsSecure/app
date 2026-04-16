@@ -97,17 +97,28 @@ class MqttService : Service() {
 
     private fun connectAndSubscribe() {
         scope.launch {
-            var reconnectDelay = mqttConfig.reconnectDelay
+            val backoffSequence = listOf(2000L, 4000L, 8000L, 16000L)
+            var backoffIndex = 0
+            
             while (true) {
                 try {
+                    val state = mqttClient.state
+                    if (state.isConnected) {
+                        Log.d(TAG, "Already connected, skipping connection attempt")
+                        break
+                    }
+
+                    MqttLogManager.log("Attempting connection to ${mqttConfig.brokerHost}...")
+                    
                     mqttClient.connectWith()
                         .cleanSession(mqttConfig.cleanSession)
                         .keepAlive(mqttConfig.keepAliveSeconds)
                         .send()
                         .get()   // block coroutine until connected
 
+                    MqttLogManager.log("Connected to ${mqttConfig.brokerHost}:${mqttConfig.brokerPort}")
                     Log.i(TAG, "MQTT connected → ${mqttConfig.brokerHost}:${mqttConfig.brokerPort}")
-                    reconnectDelay = mqttConfig.reconnectDelay   // reset on success
+                    backoffIndex = 0 // reset on success
 
                     subscribeToAlerts()
                     subscribeToHeartbeat()
@@ -115,15 +126,23 @@ class MqttService : Service() {
                     break   // exit retry loop — subscriptions are now live
 
                 } catch (e: Exception) {
-                    Log.w(TAG, "MQTT connect failed — retrying in ${reconnectDelay}ms", e)
-                    delay(reconnectDelay)
-                    reconnectDelay = minOf(reconnectDelay * 2, MAX_RECONNECT_DELAY)
+                    val currentDelay = backoffSequence[backoffIndex]
+                    MqttLogManager.log("Connection failed: ${e.message}. Retrying in ${currentDelay/1000}s")
+                    Log.w(TAG, "MQTT connect failed — retrying in ${currentDelay}ms", e)
+                    
+                    delay(currentDelay)
+                    
+                    // Move to next backoff step, cap at 16s
+                    if (backoffIndex < backoffSequence.lastIndex) {
+                        backoffIndex++
+                    }
                 }
             }
         }
     }
 
     private fun subscribeToAlerts() {
+        MqttLogManager.log("Subscribing to ${MqttTopics.ALERTS}")
         mqttClient.subscribeWith()
             .topicFilter(MqttTopics.ALERTS)
             .qos(com.hivemq.client.mqtt.datatypes.MqttQos.AT_LEAST_ONCE)
@@ -132,6 +151,7 @@ class MqttService : Service() {
     }
 
     private fun subscribeToHeartbeat() {
+        MqttLogManager.log("Subscribing to ${MqttTopics.HEARTBEAT}")
         mqttClient.subscribeWith()
             .topicFilter(MqttTopics.HEARTBEAT)
             .qos(com.hivemq.client.mqtt.datatypes.MqttQos.AT_MOST_ONCE)
@@ -140,10 +160,14 @@ class MqttService : Service() {
     }
 
     private fun subscribeToStatusPing() {
+        MqttLogManager.log("Subscribing to ${MqttTopics.STATUS_PING}")
         mqttClient.subscribeWith()
             .topicFilter(MqttTopics.STATUS_PING)
             .qos(com.hivemq.client.mqtt.datatypes.MqttQos.AT_MOST_ONCE)
-            .callback { _ -> Log.d(TAG, "Pi status ping received") }
+            .callback { _ -> 
+                Log.d(TAG, "Pi status ping received")
+                MqttLogManager.log("Status ping received from node")
+            }
             .send()
     }
 
@@ -152,6 +176,7 @@ class MqttService : Service() {
     private fun handleAlert(publish: Mqtt3Publish) {
         val payload = publish.payloadAsBytes.toString(StandardCharsets.UTF_8)
         Log.d(TAG, "Alert received: $payload")
+        MqttLogManager.log("ALERT INCOMING: $payload")
         scope.launch {
             try {
                 val dto    = json.decodeFromString<AlertEventDto>(payload)
@@ -166,6 +191,7 @@ class MqttService : Service() {
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse alert payload", e)
+                MqttLogManager.log("ERROR: Failed to parse alert JSON")
             }
         }
     }
@@ -173,6 +199,7 @@ class MqttService : Service() {
     private fun handleHeartbeat(publish: Mqtt3Publish) {
         val payload = publish.payloadAsBytes.toString(StandardCharsets.UTF_8)
         Log.d(TAG, "Heartbeat received: $payload")
+        MqttLogManager.log("HEARTBEAT RECEIVED: $payload")
         scope.launch {
             try {
                 val dto    = json.decodeFromString<HeartbeatDto>(payload)
@@ -185,6 +212,7 @@ class MqttService : Service() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse heartbeat payload", e)
+                MqttLogManager.log("ERROR: Failed to parse heartbeat JSON")
             }
         }
     }

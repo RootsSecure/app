@@ -6,24 +6,26 @@ import androidx.compose.ui.graphics.Color
 // "The app is not a dashboard. It is a command center."
 
 // Backgrounds (obsidian layering system)
-val Background        = Color(0xFF131313)  // base canvas
+val Background        = Color(0xFF0A0A0A)  // base canvas
 val SurfaceContainer  = Color(0xFF1E1E1E)  // elevated cards
 val SurfaceBright     = Color(0xFF2C2C2C)  // interactive hover state
 val SurfaceVariant    = Color(0xFF252525)  // input fields, inner panels
 
 // Primary accent — neon teal "radar glow"
-val TealPrimary       = Color(0xFF55D8E1)
+val TealPrimary       = Color(0xFF00F2FF)
 val TealDim           = Color(0xFF00ADB5)
 val TealContainer     = Color(0xFF003A3D)
 val OnTeal            = Color(0xFF002022)
 
 // Semantic alert colors
-val CriticalRed       = Color(0xFFEF4444)  // CRITICAL — JCB / Escalation
+val CriticalRed       = Color(0xFFFF003D)  // CRITICAL — JCB / Escalation
 val CriticalContainer = Color(0xFF3B0000)
-val HighAmber         = Color(0xFFF59E0B)  // HIGH — Suspicious Activity
+val HighAmber         = Color(0xFFFFB800)  // HIGH — Suspicious Activity
 val HighContainer     = Color(0xFF3B2200)
-val SafeGreen         = Color(0xFF10B981)  // SAFE / Healthy status
+val SafeGreen         = Color(0xFF00FF85)  // SAFE / Healthy status
 val SafeContainer     = Color(0xFF00280F)
+val ElectricViolet    = Color(0xFF8F00FF)  // INFO / Telemetry
+val VioletContainer   = Color(0xFF28004D)
 
 // Text hierarchy
 val OnBackground      = Color(0xFFE5E2E1)  // Primary text (off-white, not pure white)

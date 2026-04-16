@@ -16,19 +16,19 @@ object MqttTopics {
     const val NODE_ID          = "nri-rpi-001"   // Update in provisioning
 
     /** Full-schema alert JSON payload (Rule 1 / 2 / 3 trigger events) */
-    const val ALERTS           = "$ROOT/$NODE_ID/alerts"
+    const val ALERTS           = "$ROOT/+/alerts"
 
     /** Hourly hardware heartbeat: cpu_temp_c, network_latency_ms, power_status */
-    const val HEARTBEAT        = "$ROOT/$NODE_ID/heartbeat"
+    const val HEARTBEAT        = "$ROOT/+/heartbeat"
 
     /** Lightweight "I'm alive" ping every 60 s — used for online/offline status */
-    const val STATUS_PING      = "$ROOT/$NODE_ID/status"
+    const val STATUS_PING      = "$ROOT/+/status"
 
     /** Camera snapshot availability notification (payload = image URL) */
-    const val SNAPSHOT_READY   = "$ROOT/$NODE_ID/snapshot"
+    const val SNAPSHOT_READY   = "$ROOT/+/snapshot"
 
     /** Wildcard to subscribe to ALL topics from this node */
-    const val ALL_NODE_TOPICS  = "$ROOT/$NODE_ID/#"
+    const val ALL_NODE_TOPICS  = "$ROOT/+/#"
 
     /** QoS levels */
     const val QOS_AT_MOST_ONCE  = 0   // heartbeat pings

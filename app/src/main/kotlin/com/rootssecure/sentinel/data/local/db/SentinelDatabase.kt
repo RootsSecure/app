@@ -18,7 +18,7 @@ import com.rootssecure.sentinel.data.local.entity.PropertyDao
         HeartbeatEntity::class,
         PropertyInfoEntity::class
     ],
-    version   = 3,
+    version   = 4,
     exportSchema = true
 )
 abstract class SentinelDatabase : RoomDatabase() {

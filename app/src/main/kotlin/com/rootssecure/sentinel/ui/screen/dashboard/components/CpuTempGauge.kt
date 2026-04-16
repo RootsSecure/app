@@ -27,14 +27,15 @@ import com.rootssecure.sentinel.ui.theme.SentinelShapes
  */
 @Composable
 fun CpuTempGauge(
-    currentTemp: Double,
-    history: List<Float>,   // for future sparkline implementation
+    currentTemp: () -> Double,
+    history: () -> List<Float>,   // for future sparkline implementation
     modifier: Modifier = Modifier
 ) {
-    val fraction = (currentTemp / 80.0).coerceIn(0.0, 1.0).toFloat()
+    val temp = currentTemp()
+    val fraction = (temp / 80.0).coerceIn(0.0, 1.0).toFloat()
     val color = when {
-        currentTemp < 60 -> SafeGreen
-        currentTemp < 72 -> HighAmber
+        temp < 60 -> SafeGreen
+        temp < 72 -> HighAmber
         else             -> CriticalRed
     }
 
@@ -42,14 +43,14 @@ fun CpuTempGauge(
         Column(modifier = Modifier.padding(20.dp)) {
             Column {
                 Text(
-                    text  = "${currentTemp.toInt()}°C",
+                    text  = "${temp.toInt()}°C",
                     style = SentinelTypography.displayMedium.copy(
                         fontSize = 48.sp,
                         color    = color
                     )
                 )
                 Text(
-                    text  = if (currentTemp > 80) "⚠ CRITICAL TEMPERATURE" else "System Temperature: NORMAL",
+                    text  = if (temp > 80) "⚠ CRITICAL TEMPERATURE" else "System Temperature: NORMAL",
                     style = MaterialTheme.typography.labelMedium,
                     color = color,
                     modifier = Modifier.padding(top = 4.dp)

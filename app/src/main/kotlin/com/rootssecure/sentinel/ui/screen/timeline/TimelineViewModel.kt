@@ -26,7 +26,7 @@ class TimelineViewModel @Inject constructor(
     val uiState: StateFlow<TimelineUiState> =
         combine(
             getActiveAlerts(),
-            devSettings.isDeveloperModeEnabled
+            devSettings.isDeveloperModeEnabled.distinctUntilChanged()
         ) { alerts, devMode ->
             val filtered = if (devMode) alerts else alerts.filter { !it.isMock }
             TimelineUiState.Success(filtered) as TimelineUiState

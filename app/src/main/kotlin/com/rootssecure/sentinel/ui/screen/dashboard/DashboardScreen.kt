@@ -36,11 +36,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
             .fillMaxSize()
             .background(Background)
     ) {
-        val title = if (state is DashboardUiState.Success && (state as DashboardUiState.Success).latestHeartbeat == null) {
-            "Device Status"
-        } else {
-            "ROOTSSECURE"
-        }
+        val title = "Device Status"
         
         TopBar(title = title)
 
@@ -48,14 +44,14 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
             when (uiState) {
                 is DashboardUiState.Loading -> DashboardLoading()
                 is DashboardUiState.Error   -> DashboardError(uiState.message)
-                is DashboardUiState.Success -> DashboardContent(uiState)
+                is DashboardUiState.Success -> DashboardContent(uiState, viewModel)
             }
         }
     }
 }
 
 @Composable
-private fun DashboardContent(state: DashboardUiState.Success) {
+private fun DashboardContent(state: DashboardUiState.Success, viewModel: DashboardViewModel) {
     val hb = state.latestHeartbeat
 
     Column(
@@ -65,7 +61,7 @@ private fun DashboardContent(state: DashboardUiState.Success) {
             .padding(horizontal = 24.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        if (hb == null) {
+        if (!state.isConnected) {
             // ── Disconnected State Focus ───────────────────────────────────────
             Box(
                 modifier = Modifier
@@ -116,9 +112,12 @@ private fun DashboardContent(state: DashboardUiState.Success) {
             ) {
                 // Focus: CPU Temperature with History
                 Box(modifier = Modifier.weight(1.2f)) {
+                    val cpuTemp by viewModel.cpuTempFlow.collectAsState()
+                    val cpuHistory by viewModel.cpuHistoryFlow.collectAsState()
+                    
                     CpuTempGauge(
-                        currentTemp = hb.cpuTempC,
-                        history     = state.heartbeatHistory.map { it.cpuTempC.toFloat() }
+                        currentTemp = { cpuTemp },
+                        history     = { cpuHistory }
                     )
                 }
 
@@ -127,19 +126,26 @@ private fun DashboardContent(state: DashboardUiState.Success) {
                     modifier = Modifier.weight(0.8f),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    val latency by viewModel.latencyFlow.collectAsState()
+                    
                     MetricCard(
                         label    = "LATENCY",
-                        value    = "${hb.networkLatencyMs}",
+                        value    = { "$latency" },
                         unit     = "ms",
                         subtitle = "4G Lora Uplink",
-                        isWarning = hb.networkLatencyMs > 150
+                        isWarning = { latency > 150 }
                     )
+                    
+                    val powerStatusStr = if (hb?.powerStatus is PowerStatus.DirectPower) "AC" else "BAT"
+                    val powerSubtitleStr = if (hb?.powerStatus is PowerStatus.DirectPower) "Stable" else "Fallback"
+                    val powerWarningStr = hb?.powerStatus is PowerStatus.BatteryFallback
+                    
                     MetricCard(
                         label    = "POWER",
-                        value    = if (hb.powerStatus is PowerStatus.DirectPower) "AC" else "BAT",
+                        value    = { powerStatusStr },
                         unit     = "",
-                        subtitle = if (hb.powerStatus is PowerStatus.DirectPower) "Stable" else "Fallback",
-                        isWarning = hb.powerStatus is PowerStatus.BatteryFallback
+                        subtitle = powerSubtitleStr,
+                        isWarning = { powerWarningStr }
                     )
                 }
             }
@@ -156,9 +162,13 @@ private fun DashboardContent(state: DashboardUiState.Success) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    ResourceMiniCard(label = "RAM", value = "${hb.ramUsagePercent.toInt()}%", modifier = Modifier.weight(1f))
-                    ResourceMiniCard(label = "DISK", value = "${hb.storageUsagePercent.toInt()}%", modifier = Modifier.weight(1f))
-                    ResourceMiniCard(label = "BATT", value = "${hb.batteryPercent}%", modifier = Modifier.weight(1f))
+                    val ramUsage by viewModel.ramUsageFlow.collectAsState()
+                    val storageUsage by viewModel.storageUsageFlow.collectAsState()
+                    val batteryPercent by viewModel.batteryPercentFlow.collectAsState()
+                    
+                    ResourceMiniCard(label = "RAM", value = { "${ramUsage.toInt()}%" }, modifier = Modifier.weight(1f))
+                    ResourceMiniCard(label = "DISK", value = { "${storageUsage.toInt()}%" }, modifier = Modifier.weight(1f))
+                    ResourceMiniCard(label = "BATT", value = { "$batteryPercent%" }, modifier = Modifier.weight(1f))
                 }
             }
 
@@ -168,7 +178,7 @@ private fun DashboardContent(state: DashboardUiState.Success) {
 }
 
 @Composable
-private fun ResourceMiniCard(label: String, value: String, modifier: Modifier = Modifier) {
+private fun ResourceMiniCard(label: String, value: () -> String, modifier: Modifier = Modifier) {
     Surface(
         color = SurfaceContainer,
         shape = SentinelShapes.extraSmall,
@@ -179,7 +189,7 @@ private fun ResourceMiniCard(label: String, value: String, modifier: Modifier = 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = label, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-            Text(text = value, style = MaterialTheme.typography.titleMedium, color = OnBackground, fontWeight = FontWeight.Bold)
+            Text(text = value(), style = MaterialTheme.typography.titleMedium, color = OnBackground, fontWeight = FontWeight.Bold)
         }
     }
 }

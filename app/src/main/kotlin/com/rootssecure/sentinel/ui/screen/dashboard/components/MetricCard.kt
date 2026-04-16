@@ -15,13 +15,15 @@ import com.rootssecure.sentinel.ui.theme.*
 @Composable
 fun MetricCard(
     label: String,
-    value: String,
+    value: () -> String,
     unit: String,
     subtitle: String,
-    isWarning: Boolean = false,
+    isWarning: () -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
-    val valueColor = if (isWarning) HighAmber else TealPrimary
+    val warning = isWarning()
+    val valueColor = if (warning) HighAmber else TealPrimary
+    val valueStr = value()
 
     GlassCard(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -34,7 +36,7 @@ fun MetricCard(
             Column {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text  = value,
+                        text  = valueStr,
                         style = SentinelTypography.displayMedium.copy(
                             fontSize = 40.sp,
                             color    = valueColor
@@ -60,7 +62,7 @@ fun MetricCard(
                     color = OnSurface
                 )
             }
-            if (isWarning) {
+            if (warning) {
                 Text(text = "⚠", fontSize = 28.sp)
             }
         }
