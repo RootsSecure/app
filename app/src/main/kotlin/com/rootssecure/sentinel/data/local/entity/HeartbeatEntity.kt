@@ -20,6 +20,9 @@ data class HeartbeatEntity(
     @ColumnInfo(name = "ram_usage_percent") val ramUsagePercent: Double,
     @ColumnInfo(name = "storage_usage_percent") val storageUsagePercent: Double,
     @ColumnInfo(name = "battery_percent") val batteryPercent: Int,
+    @ColumnInfo(name = "node_id")         val nodeId: String? = null,
+    @ColumnInfo(name = "uplink_status")   val uplinkStatus: String? = null,
+    @ColumnInfo(name = "firmware_version") val firmwareVersion: String? = null,
     @ColumnInfo(name = "is_mock")          val isMock: Boolean = false,
     @ColumnInfo(name = "recorded_at")      val recordedAt: Long   // epoch ms
 )

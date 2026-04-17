@@ -11,13 +11,14 @@ package com.rootssecure.sentinel.data.mqtt
  * it as a Wi-Fi hotspot (192.168.4.1) or the hotspot DHCP-assigned address.
  */
 data class MqttConfig(
-    val brokerHost: String  = "192.168.4.1",
-    val brokerPort: Int     = 1883,
-    val clientId: String    = "sentinel-android-01",
-    val username: String?   = null,      // optional — enable auth on Mosquitto
-    val password: String?   = null,
+    val brokerHost: String  = "broker.hivemq.cloud",
+    val brokerPort: Int     = 8883,
+    val useTls: Boolean     = true,
+    val clientId: String    = "sentinel-mobile-client",
+    val username: String?   = "sentinel_user", // provisioned via secure portal
+    val password: String?   = "secure_password_123",
     val keepAliveSeconds: Int = 60,
     val cleanSession: Boolean = true,
-    val connectTimeoutSeconds: Int = 10,
-    val reconnectDelay: Long = 2_000L   // ms before reconnect attempt (base backoff)
+    val connectTimeoutSeconds: Int = 20,
+    val reconnectDelay: Long = 2_000L
 )

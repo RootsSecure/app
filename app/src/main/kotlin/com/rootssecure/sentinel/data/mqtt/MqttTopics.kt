@@ -13,22 +13,12 @@ package com.rootssecure.sentinel.data.mqtt
  */
 object MqttTopics {
     private const val ROOT     = "sentinel"
-    const val NODE_ID          = "nri-rpi-001"   // Update in provisioning
 
-    /** Full-schema alert JSON payload (Rule 1 / 2 / 3 trigger events) */
-    const val ALERTS           = "$ROOT/+/alerts"
-
-    /** Hourly hardware heartbeat: cpu_temp_c, network_latency_ms, power_status */
-    const val HEARTBEAT        = "$ROOT/+/heartbeat"
-
-    /** Lightweight "I'm alive" ping every 60 s — used for online/offline status */
-    const val STATUS_PING      = "$ROOT/+/status"
-
-    /** Camera snapshot availability notification (payload = image URL) */
-    const val SNAPSHOT_READY   = "$ROOT/+/snapshot"
-
-    /** Wildcard to subscribe to ALL topics from this node */
-    const val ALL_NODE_TOPICS  = "$ROOT/+/#"
+    fun alerts(nodeId: String)      = "$ROOT/$nodeId/alerts"
+    fun heartbeat(nodeId: String)   = "$ROOT/$nodeId/heartbeat"
+    fun status(nodeId: String)      = "$ROOT/$nodeId/status"
+    fun snapshot(nodeId: String)    = "$ROOT/$nodeId/snapshot"
+    fun allNode(nodeId: String)     = "$ROOT/$nodeId/#"
 
     /** QoS levels */
     const val QOS_AT_MOST_ONCE  = 0   // heartbeat pings

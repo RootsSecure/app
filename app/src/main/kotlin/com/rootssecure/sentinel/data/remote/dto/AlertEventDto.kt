@@ -21,6 +21,7 @@ data class AlertEventDto(
     @SerialName("alert_type")       val alertType: String,
     @SerialName("vendor_event_id")  val vendorEventId: String,
     @SerialName("occurred_at")      val occurredAt: String,
+    @SerialName("node_id")          val nodeId: String? = null,
     @SerialName("metadata_json")    val metadataJson: AlertMetadataDto,
     @SerialName("media_refs")       val mediaRefs: List<String> = emptyList()
 )

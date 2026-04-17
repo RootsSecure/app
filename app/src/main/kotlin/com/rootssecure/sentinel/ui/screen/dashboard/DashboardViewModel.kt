@@ -86,6 +86,9 @@ class DashboardViewModel @Inject constructor(
     val storageUsageFlow: StateFlow<Double> = filteredHistoryFlow.map { it.firstOrNull()?.storageUsagePercent ?: 0.0 }
         .distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
+    val powerStatusFlow: StateFlow<com.rootssecure.sentinel.domain.model.PowerStatus> = filteredHistoryFlow.map { it.firstOrNull()?.powerStatus ?: com.rootssecure.sentinel.domain.model.PowerStatus.DirectPower }
+        .distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), com.rootssecure.sentinel.domain.model.PowerStatus.DirectPower)
+
     val cpuHistoryFlow: StateFlow<List<Float>> = filteredHistoryFlow.map { list -> list.reversed().map { it.cpuTempC.toFloat() } }
         .distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }

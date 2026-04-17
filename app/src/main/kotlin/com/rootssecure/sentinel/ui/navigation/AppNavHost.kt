@@ -17,7 +17,6 @@ import androidx.navigation.navArgument
 import com.rootssecure.sentinel.ui.screen.alertdetail.AlertDetailScreen
 import com.rootssecure.sentinel.ui.screen.dashboard.DashboardScreen
 import com.rootssecure.sentinel.ui.screen.health.HealthDeepDiveScreen
-import com.rootssecure.sentinel.ui.screen.provisioning.ProvisioningScreen
 import com.rootssecure.sentinel.ui.screen.settings.SettingsScreen
 import com.rootssecure.sentinel.ui.screen.timeline.TimelineScreen
 import androidx.compose.foundation.layout.Box
@@ -66,9 +65,7 @@ fun AppNavHost() {
             )
         }
 
-        composable(Screen.Provisioning.route) {
-            ProvisioningScreen()
-        }
+
     }
 }
 
@@ -100,9 +97,7 @@ private fun MainTabsScreen(navController: androidx.navigation.NavController) {
                         navController.navigate(Screen.AlertDetail.createRoute(alertId))
                     }
                 )
-                3 -> SettingsScreen(
-                    onNavigateToProvisioning = { navController.navigate(Screen.Provisioning.route) }
-                )
+                3 -> SettingsScreen(onNavigateToProvisioning = {})
             }
         }
     }

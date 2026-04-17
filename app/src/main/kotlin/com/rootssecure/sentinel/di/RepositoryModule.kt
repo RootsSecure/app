@@ -3,6 +3,7 @@ package com.rootssecure.sentinel.di
 import com.rootssecure.sentinel.data.repository.AlertRepositoryImpl
 import com.rootssecure.sentinel.data.repository.DeveloperSettingsRepositoryImpl
 import com.rootssecure.sentinel.data.repository.HeartbeatRepositoryImpl
+import com.rootssecure.sentinel.data.repository.MqttConfigRepositoryImpl
 import com.rootssecure.sentinel.domain.repository.AlertRepository
 import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
 import com.rootssecure.sentinel.domain.repository.HeartbeatRepository
@@ -28,4 +29,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDeveloperSettingsRepository(impl: DeveloperSettingsRepositoryImpl): DeveloperSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMqttConfigRepository(impl: MqttConfigRepositoryImpl): com.rootssecure.sentinel.domain.repository.MqttConfigRepository
 }

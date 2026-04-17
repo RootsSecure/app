@@ -17,27 +17,26 @@ import com.rootssecure.sentinel.data.local.entity.PropertyInfoEntity
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val mqttConfig: MqttConfig,
     private val devSettings: DeveloperSettingsRepository,
-    private val propertyDao: PropertyDao
+    private val propertyDao: PropertyDao,
+    private val configRepo: com.rootssecure.sentinel.domain.repository.MqttConfigRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState(mqttConfig = mqttConfig))
-    
     val uiState: StateFlow<SettingsUiState> = combine(
-        _uiState,
         devSettings.isDeveloperModeEnabled.distinctUntilChanged(),
-        propertyDao.getAllProperties()
-    ) { state, devMode, properties ->
-        state.copy(
+        propertyDao.getAllProperties(),
+        configRepo.config
+    ) { devMode, properties, config ->
+        SettingsUiState(
             isDeveloperMode = devMode,
             properties = properties,
+            mqttConfig = config,
             activePropertyId = properties.firstOrNull { it.isActive }?.id ?: properties.firstOrNull()?.id
         )
     }.stateIn(
         viewModelScope, 
         SharingStarted.WhileSubscribed(5000), 
-        SettingsUiState(mqttConfig = mqttConfig)
+        SettingsUiState(mqttConfig = MqttConfig())
     )
 
     fun toggleDeveloperMode(enabled: Boolean) {
@@ -69,6 +68,18 @@ class SettingsViewModel @Inject constructor(
     fun updatePropertyInfo(property: PropertyInfoEntity) {
         viewModelScope.launch {
             propertyDao.updatePropertyInfo(property)
+        }
+    }
+
+    fun deleteProperty(id: Int) {
+        viewModelScope.launch {
+            propertyDao.deletePropertyById(id)
+        }
+    }
+
+    fun updateMqttConfig(config: MqttConfig) {
+        viewModelScope.launch {
+            configRepo.updateConfig(config)
         }
     }
 }

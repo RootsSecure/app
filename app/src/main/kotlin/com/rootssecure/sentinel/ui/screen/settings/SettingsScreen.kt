@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rootssecure.sentinel.ui.common.TopBar
 import com.rootssecure.sentinel.ui.theme.*
@@ -27,17 +28,18 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Background)
-    ) {
-        TopBar(title = "System Settings")
-
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Background,
+        topBar = { TopBar(title = "System Settings") }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -51,12 +53,21 @@ fun SettingsScreen(
             // Property Information Editor
             SettingsSection(title = "SITE MANAGEMENT (LOCAL DB)") {
                 state.properties.forEach { property ->
-                    PropertyCard(
-                        property = property,
-                        onSave = { updated -> viewModel.updatePropertyInfo(updated) },
-                        onSetActive = { viewModel.setActiveProperty(property.id) },
-                        isActive = property.id == state.activePropertyId
-                    )
+                    key(property.id) {
+                        PropertyCard(
+                            property = property,
+                            onSave = { updated -> 
+                                viewModel.updatePropertyInfo(updated)
+                                scope.launch { snackbarHostState.showSnackbar("Property details saved.") }
+                            },
+                            onDelete = {
+                                viewModel.deleteProperty(property.id)
+                                scope.launch { snackbarHostState.showSnackbar("Property removed.") }
+                            },
+                            onSetActive = { viewModel.setActiveProperty(property.id) },
+                            isActive = property.id == state.activePropertyId
+                        )
+                    }
                 }
 
                 Button(
@@ -73,39 +84,40 @@ fun SettingsScreen(
 
             // Connection Section
             SettingsSection(title = "MQTT ARCHITECTURE") {
-                ConfigItem(
-                    icon = Icons.Default.Dns,
-                    label = "Broker Host",
-                    value = state.mqttConfig.brokerHost
-                )
-                ConfigItem(
-                    icon = Icons.Default.Numbers,
-                    label = "Broker Port",
-                    value = state.mqttConfig.brokerPort.toString()
-                )
-                ConfigItem(
-                    icon = Icons.Default.Label,
-                    label = "Client ID",
-                    value = state.mqttConfig.clientId
-                )
-            }
+                var localHost by remember(state.mqttConfig.brokerHost) { mutableStateOf(state.mqttConfig.brokerHost) }
+                var localUser by remember(state.mqttConfig.username) { mutableStateOf(state.mqttConfig.username ?: "") }
+                var localPass by remember(state.mqttConfig.password) { mutableStateOf(state.mqttConfig.password ?: "") }
 
-            // Hardware Action
-            SettingsSection(title = "HARDWARE MANAGEMENT") {
-                Button(
-                    onClick = onNavigateToProvisioning,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = TealPrimary,
-                        contentColor = Background
-                    ),
-                    shape = SentinelShapes.medium
+                Surface(
+                    color = SurfaceContainer,
+                    shape = SentinelShapes.medium,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.SettingsBluetooth, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("SETUP NEW DEVICE", fontWeight = FontWeight.Bold)
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PropertyField("Broker Host", localHost) { localHost = it }
+                        PropertyField("Username", localUser) { localUser = it }
+                        PropertyField("Password", localPass) { localPass = it }
+
+                        Button(
+                            onClick = { 
+                                viewModel.updateMqttConfig(state.mqttConfig.copy(
+                                    brokerHost = localHost,
+                                    username = localUser,
+                                    password = localPass
+                                ))
+                                scope.launch { snackbarHostState.showSnackbar("Network settings updated. Reconnecting...") }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = VioletContainer, contentColor = ElectricViolet),
+                            shape = SentinelShapes.small
+                        ) {
+                            Text("SAVE NETWORK SETTINGS", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+                    }
                 }
             }
+
+
 
             // Developer Mode Section
             SettingsSection(title = "DEBUG & TESTING") {
@@ -190,12 +202,12 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "SENTINEL v1.1.0 (Command Center)",
+                    text = "SENTINEL v2.0.0 (Cloud-Native)",
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )
                 Text(
-                    text = "Privacy-First / Local-First architecture",
+                    text = "End-to-End Encryption / HiveMQ Cloud",
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant.copy(alpha = 0.5f)
                 )
@@ -255,6 +267,7 @@ private fun ProfileControl(name: String, role: String) {
 private fun PropertyCard(
     property: com.rootssecure.sentinel.data.local.entity.PropertyInfoEntity,
     onSave: (com.rootssecure.sentinel.data.local.entity.PropertyInfoEntity) -> Unit,
+    onDelete: () -> Unit,
     onSetActive: () -> Unit,
     isActive: Boolean
 ) {
@@ -264,10 +277,12 @@ private fun PropertyCard(
         modifier = Modifier.fillMaxWidth(),
         border = if (isActive) androidx.compose.foundation.BorderStroke(1.dp, TealPrimary) else null
     ) {
-        var localName by remember(property.propertyName) { mutableStateOf(property.propertyName) }
-        var localOwner by remember(property.ownerName) { mutableStateOf(property.ownerName) }
-        var localAddress by remember(property.address) { mutableStateOf(property.address) }
-        var localMqtt by remember(property.mqttTopicId) { mutableStateOf(property.mqttTopicId) }
+        // We use remember { } without keys to prevent focus loss during database updates.
+        // The LaunchedEffect ensures we seed the initial values once.
+        var localName by remember { mutableStateOf(property.propertyName) }
+        var localOwner by remember { mutableStateOf(property.ownerName) }
+        var localAddress by remember { mutableStateOf(property.address) }
+        var localMqtt by remember { mutableStateOf(property.mqttTopicId) }
 
         val isDirty = localName != property.propertyName ||
                       localOwner != property.ownerName ||
@@ -283,20 +298,20 @@ private fun PropertyCard(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = { onSave(property.copy(propertyName = localName, ownerName = localOwner, address = localAddress, mqttTopicId = localMqtt)) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1.5f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isDirty) TealPrimary else TealPrimary.copy(alpha = 0.15f),
                         contentColor = if (isDirty) Background else TealPrimary
                     ),
                     shape = SentinelShapes.small
                 ) {
-                    Text("SAVE CHANGES", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("SAVE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
 
                 if (!isActive) {
                     Button(
                         onClick = onSetActive,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1.5f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = SurfaceBright,
                             contentColor = OnSurface
@@ -305,6 +320,14 @@ private fun PropertyCard(
                     ) {
                         Text("SET ACTIVE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
+                }
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = CriticalRed)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete Property")
                 }
             }
 

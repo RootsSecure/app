@@ -54,7 +54,11 @@ class MqttService : Service() {
 
     @Inject lateinit var alertDao: AlertEventDao
     @Inject lateinit var heartbeatDao: HeartbeatDao
-    @Inject lateinit var mqttConfig: MqttConfig
+    @Inject lateinit var propertyDao: com.rootssecure.sentinel.data.local.entity.PropertyDao
+    @Inject lateinit var configRepo: com.rootssecure.sentinel.domain.repository.MqttConfigRepository
+
+    private var currentMqttTopicId: String? = null
+    private var currentConfig: MqttConfig? = null
 
     private val serviceJob  = SupervisorJob()
     private val scope       = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -68,7 +72,52 @@ class MqttService : Service() {
         super.onCreate()
         createNotificationChannels()
         startForeground(NOTIFICATION_ID, buildForegroundNotification())
-        buildMqttClient()
+        // Observe config changes for live reconnection
+        scope.launch {
+            configRepo.config.collect { config ->
+                if (currentConfig != config) {
+                    currentConfig = config
+                    Log.d(TAG, "MQTT Config changed — re-initializing client")
+                    MqttLogManager.log("Network settings updated. Reconnecting...")
+                    
+                    // Terminate existing connection
+                    if (::mqttClient.isInitialized) {
+                        try {
+                            mqttClient.disconnect().get()
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Disconnect failed during reconfig", e)
+                        }
+                    }
+                    
+                    buildMqttClient()
+                    connectAndSubscribe()
+                }
+            }
+        }
+
+        // Observe active property to handle dynamic site switching
+        scope.launch {
+            propertyDao.getActiveProperty().collect { property ->
+                val newTopicId = property?.mqttTopicId
+                if (newTopicId != currentMqttTopicId) {
+                    currentMqttTopicId = newTopicId
+                    Log.d(TAG, "Active site changed to $newTopicId — re-subscribing")
+                    if (::mqttClient.isInitialized && mqttClient.state.isConnected) {
+                        resubscribe()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun resubscribe() {
+        if (currentMqttTopicId == null) return
+        
+        MqttLogManager.log("Re-subscribing for Node: $currentMqttTopicId")
+        // In MQTT v3 Async Client, we just send new subscriptions
+        subscribeToAlerts()
+        subscribeToHeartbeat()
+        subscribeToStatusPing()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -87,12 +136,18 @@ class MqttService : Service() {
     // ── MQTT Client ──────────────────────────────────────────────────────────
 
     private fun buildMqttClient() {
-        mqttClient = MqttClient.builder()
+        val config = currentConfig ?: return
+        val builder = MqttClient.builder()
             .useMqttVersion3()
-            .identifier(mqttConfig.clientId)
-            .serverHost(mqttConfig.brokerHost)
-            .serverPort(mqttConfig.brokerPort)
-            .buildAsync()
+            .identifier(config.clientId)
+            .serverHost(config.brokerHost)
+            .serverPort(config.brokerPort)
+
+        if (config.useTls) {
+            builder.sslWithDefaultConfig()
+        }
+
+        mqttClient = builder.buildAsync()
     }
 
     private fun connectAndSubscribe() {
@@ -108,16 +163,24 @@ class MqttService : Service() {
                         break
                     }
 
-                    MqttLogManager.log("Attempting connection to ${mqttConfig.brokerHost}...")
+                    val config = currentConfig ?: break
+                    MqttLogManager.log("Attempting connection to ${config.brokerHost}...")
                     
-                    mqttClient.connectWith()
-                        .cleanSession(mqttConfig.cleanSession)
-                        .keepAlive(mqttConfig.keepAliveSeconds)
-                        .send()
-                        .get()   // block coroutine until connected
+                    val connectBuilder = mqttClient.connectWith()
+                        .cleanSession(config.cleanSession)
+                        .keepAlive(config.keepAliveSeconds)
 
-                    MqttLogManager.log("Connected to ${mqttConfig.brokerHost}:${mqttConfig.brokerPort}")
-                    Log.i(TAG, "MQTT connected → ${mqttConfig.brokerHost}:${mqttConfig.brokerPort}")
+                    if (config.username != null && config.password != null) {
+                        connectBuilder.simpleAuth()
+                            .username(config.username)
+                            .password(config.password.toByteArray())
+                            .applySimpleAuth()
+                    }
+
+                    connectBuilder.send().get()   // block coroutine until connected
+
+                    MqttLogManager.log("Connected to ${config.brokerHost}:${config.brokerPort}")
+                    Log.i(TAG, "MQTT connected → ${config.brokerHost}:${config.brokerPort}")
                     backoffIndex = 0 // reset on success
 
                     subscribeToAlerts()
@@ -142,27 +205,30 @@ class MqttService : Service() {
     }
 
     private fun subscribeToAlerts() {
-        MqttLogManager.log("Subscribing to ${MqttTopics.ALERTS}")
+        val topic = MqttTopics.alerts(currentMqttTopicId ?: "+")
+        MqttLogManager.log("Subscribing to $topic")
         mqttClient.subscribeWith()
-            .topicFilter(MqttTopics.ALERTS)
+            .topicFilter(topic)
             .qos(com.hivemq.client.mqtt.datatypes.MqttQos.AT_LEAST_ONCE)
             .callback { publish -> handleAlert(publish) }
             .send()
     }
 
     private fun subscribeToHeartbeat() {
-        MqttLogManager.log("Subscribing to ${MqttTopics.HEARTBEAT}")
+        val topic = MqttTopics.heartbeat(currentMqttTopicId ?: "+")
+        MqttLogManager.log("Subscribing to $topic")
         mqttClient.subscribeWith()
-            .topicFilter(MqttTopics.HEARTBEAT)
+            .topicFilter(topic)
             .qos(com.hivemq.client.mqtt.datatypes.MqttQos.AT_MOST_ONCE)
             .callback { publish -> handleHeartbeat(publish) }
             .send()
     }
 
     private fun subscribeToStatusPing() {
-        MqttLogManager.log("Subscribing to ${MqttTopics.STATUS_PING}")
+        val topic = MqttTopics.status(currentMqttTopicId ?: "+")
+        MqttLogManager.log("Subscribing to $topic")
         mqttClient.subscribeWith()
-            .topicFilter(MqttTopics.STATUS_PING)
+            .topicFilter(topic)
             .qos(com.hivemq.client.mqtt.datatypes.MqttQos.AT_MOST_ONCE)
             .callback { _ -> 
                 Log.d(TAG, "Pi status ping received")
@@ -260,7 +326,7 @@ class MqttService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_SERVICE)
             .setContentTitle("Plot Sentinel Active")
-            .setContentText("Monitoring ${mqttConfig.brokerHost} via MQTT")
+            .setContentText("Monitoring ${currentConfig?.brokerHost ?: "Broker"} via MQTT")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(intent)
             .setOngoing(true)
@@ -318,6 +384,7 @@ class MqttService : Service() {
         logicLevel    = metadataJson.logicLevel,
         motionRatio   = metadataJson.motionRatio,
         mediaRef      = mediaRefs.firstOrNull() ?: "",
+        nodeId        = nodeId ?: currentMqttTopicId,
         receivedAt    = Instant.now().toEpochMilli(),
         isMock        = false
     )
@@ -329,6 +396,9 @@ class MqttService : Service() {
         ramUsagePercent    = ramUsagePercent,
         storageUsagePercent = storageUsagePercent,
         batteryPercent     = batteryPercent,
+        nodeId             = nodeId ?: currentMqttTopicId,
+        uplinkStatus       = uplinkStatus,
+        firmwareVersion    = firmwareVersion,
         isMock            = false,
         recordedAt        = Instant.now().toEpochMilli()
     )

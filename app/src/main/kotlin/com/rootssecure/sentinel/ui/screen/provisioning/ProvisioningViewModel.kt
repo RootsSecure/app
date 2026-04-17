@@ -3,10 +3,12 @@ package com.rootssecure.sentinel.ui.screen.provisioning
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rootssecure.sentinel.data.mqtt.MqttConfig
+import com.rootssecure.sentinel.domain.repository.MqttConfigRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,7 +21,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ProvisioningViewModel @Inject constructor(
-    private val mqttConfig: MqttConfig
+    private val configRepo: MqttConfigRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProvisioningUiState>(ProvisioningUiState.Idle)
@@ -44,9 +46,12 @@ class ProvisioningViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ProvisioningUiState.Pushing
             delay(2_500)   // replace with BleManager.connectAndProvision()
-            _uiState.value = ProvisioningUiState.Success(
-                mqttConfig.copy(brokerHost = brokerIp)
-            )
+            
+            val current = configRepo.config.first()
+            val newConfig = current.copy(brokerHost = brokerIp)
+            configRepo.updateConfig(newConfig)
+            
+            _uiState.value = ProvisioningUiState.Success(newConfig)
         }
     }
 

@@ -17,8 +17,5 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object MqttModule {
-
-    @Provides
-    @Singleton
-    fun providesMqttConfig(): MqttConfig = MqttConfig()  // defaults to 192.168.4.1:1883
+    // Repository-based config is now used via MqttConfigRepository
 }

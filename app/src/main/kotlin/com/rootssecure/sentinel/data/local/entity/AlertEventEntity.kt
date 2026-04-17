@@ -25,6 +25,7 @@ data class AlertEventEntity(
     @ColumnInfo(name = "logic_level")     val logicLevel: String,
     @ColumnInfo(name = "motion_ratio")    val motionRatio: Double,
     @ColumnInfo(name = "media_ref")       val mediaRef: String,
+    @ColumnInfo(name = "node_id")         val nodeId: String? = null,
     @ColumnInfo(name = "received_at")     val receivedAt: Long,   // epoch ms
     @ColumnInfo(name = "is_flagged")      val isFlagged: Boolean = false,
     @ColumnInfo(name = "is_mock")         val isMock: Boolean = false

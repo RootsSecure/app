@@ -7,7 +7,6 @@ sealed class Screen(val route: String) {
     object AlertInbox   : Screen("alerts")
     object Timeline     : Screen("timeline")
     object Settings     : Screen("settings")
-    object Provisioning : Screen("provisioning")
 
     /** Alert detail — takes a vendorEventId argument. */
     object AlertDetail  : Screen("alerts/{alertId}") {

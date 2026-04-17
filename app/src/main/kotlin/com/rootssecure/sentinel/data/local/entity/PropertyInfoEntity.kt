@@ -36,4 +36,10 @@ interface PropertyDao {
 
     @Query("UPDATE property_info SET is_active = 1 WHERE id = :id")
     suspend fun setActive(id: Int)
+
+    @Delete
+    suspend fun deleteProperty(property: PropertyInfoEntity)
+
+    @Query("DELETE FROM property_info WHERE id = :id")
+    suspend fun deletePropertyById(id: Int)
 }

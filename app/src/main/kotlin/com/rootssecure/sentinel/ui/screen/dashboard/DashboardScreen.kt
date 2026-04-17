@@ -136,16 +136,14 @@ private fun DashboardContent(state: DashboardUiState.Success, viewModel: Dashboa
                         isWarning = { latency > 150 }
                     )
                     
-                    val powerStatusStr = if (hb?.powerStatus is PowerStatus.DirectPower) "AC" else "BAT"
-                    val powerSubtitleStr = if (hb?.powerStatus is PowerStatus.DirectPower) "Stable" else "Fallback"
-                    val powerWarningStr = hb?.powerStatus is PowerStatus.BatteryFallback
+                    val powerStatus by viewModel.powerStatusFlow.collectAsState()
                     
                     MetricCard(
                         label    = "POWER",
-                        value    = { powerStatusStr },
+                        value    = { if (powerStatus is PowerStatus.DirectPower) "AC" else "BAT" },
                         unit     = "",
-                        subtitle = powerSubtitleStr,
-                        isWarning = { powerWarningStr }
+                        subtitle = if (powerStatus is PowerStatus.DirectPower) "Stable" else "Fallback",
+                        isWarning = { powerStatus is PowerStatus.BatteryFallback }
                     )
                 }
             }

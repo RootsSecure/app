@@ -20,8 +20,11 @@ import kotlinx.serialization.Serializable
 data class HeartbeatDto(
     @SerialName("cpu_temp_c")          val cpuTempC: Double,
     @SerialName("network_latency_ms")  val networkLatencyMs: Int,
-    @SerialName("power_status")        val powerStatus: String,  // "direct_power" | "battery_fallback"
+    @SerialName("power_status")        val powerStatus: String,
     @SerialName("ram_usage_percent")   val ramUsagePercent: Double = 0.0,
     @SerialName("storage_usage_percent") val storageUsagePercent: Double = 0.0,
-    @SerialName("battery_percent")     val batteryPercent: Int = 100
+    @SerialName("battery_percent")     val batteryPercent: Int = 100,
+    @SerialName("node_id")             val nodeId: String? = null,
+    @SerialName("uplink_status")       val uplinkStatus: String? = null,
+    @SerialName("firmware_version")    val firmwareVersion: String? = null
 )

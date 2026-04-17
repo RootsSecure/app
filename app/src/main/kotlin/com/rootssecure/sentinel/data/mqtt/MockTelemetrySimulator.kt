@@ -48,6 +48,9 @@ class MockTelemetrySimulator @Inject constructor(
                 ramUsagePercent     = Random.nextDouble(15.0, 60.0),
                 storageUsagePercent = 24.5,
                 batteryPercent      = 98,
+                nodeId              = "MOCK_NODE_99",
+                uplinkStatus        = "CLOUD_CONNECTED",
+                firmwareVersion     = "2.0.0-mock",
                 isMock              = true,
                 recordedAt          = Instant.now().toEpochMilli()
             )
@@ -76,6 +79,7 @@ class MockTelemetrySimulator @Inject constructor(
                 logicLevel     = if (type == "CONSTRUCTION_VEHICLE_DETECTED" || type == "SECURITY_BREACH") "CRITICAL" else "WARNING",
                 motionRatio    = Random.nextDouble(0.0, 1.0),
                 mediaRef       = "https://picsum.photos/seed/${Random.nextInt()}/400/300",
+                nodeId         = "MOCK_NODE_99",
                 receivedAt     = Instant.now().toEpochMilli(),
                 isFlagged      = false,
                 isMock         = true
