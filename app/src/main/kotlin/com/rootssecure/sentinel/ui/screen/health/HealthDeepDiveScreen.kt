@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rootssecure.sentinel.ui.common.TopBar
 import com.rootssecure.sentinel.ui.screen.dashboard.components.CpuTempGauge
@@ -50,21 +52,55 @@ private fun HealthContent(state: HealthUiState.Success) {
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Editorial header: Extreme scale contrast
-        Column {
-            Text(
-                text = "SYSTEM TELEMETRY",
-                style = MaterialTheme.typography.labelSmall,
-                color = ElectricViolet,
-                letterSpacing = 2.sp
-            )
-            Text(
-                text = "Device Status: OPTIMAL",
-                style = MaterialTheme.typography.displayMedium,
-                color = OnBackground,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        if (!state.isConnected) {
+            // ── Disconnected State Focus ───────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = "No Device Connected",
+                        modifier = Modifier.size(100.dp),
+                        tint = TealPrimary
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "No Device Connected",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    state.mqttError?.let { error ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Error: $error",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = CriticalRed.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+        } else {
+            // Editorial header: Extreme scale contrast
+            Column {
+                Text(
+                    text = "SYSTEM TELEMETRY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = ElectricViolet,
+                    letterSpacing = 2.sp
+                )
+                Text(
+                    text = "Device Status: OPTIMAL",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = OnBackground,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
         // Primary Metrics: CPU and Battery
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -117,6 +153,7 @@ private fun HealthContent(state: HealthUiState.Success) {
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 }
 

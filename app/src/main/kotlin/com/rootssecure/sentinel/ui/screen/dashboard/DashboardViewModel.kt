@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -20,7 +21,10 @@ import javax.inject.Inject
  *
  * Derives [uiState] by combining the heartbeat history and real-time status flows.
  */
+import com.rootssecure.sentinel.domain.model.Heartbeat
 import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
+import java.time.Instant
+import kotlin.math.abs
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -36,24 +40,35 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<DashboardUiState> =
-        combine(
-            getHeartbeatHistory(),
-            getEdgeNodeStatus(),
-            devSettings.isDeveloperModeEnabled.distinctUntilChanged(),
-            tickerFlow
-        ) { history, status, devMode, now ->
-            val filteredHistory = if (devMode) history else history.filter { !it.isMock }
-            val latest = filteredHistory.firstOrNull()
-            
-            val isConnected = latest != null && (now - latest.recordedAt.toEpochMilli() < 120_000)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<DashboardUiState> = devSettings.isDeveloperModeEnabled.distinctUntilChanged()
+        .flatMapLatest { devMode ->
+            combine(
+                getHeartbeatHistory(includeMock = devMode),
+                getEdgeNodeStatus(),
+                com.rootssecure.sentinel.data.mqtt.MqttConnectionManager.isConnected,
+                com.rootssecure.sentinel.data.mqtt.MqttConnectionManager.lastError,
+                tickerFlow
+            ) { h, s, mc, me, n ->
+                val history = h as List<Heartbeat>
+                val status = s as EdgeNodeStatus
+                val mqttConnected = mc as Boolean
+                val mqttError = me as String?
+                val now = n as Long
 
-            DashboardUiState.Success(
-                nodeStatus       = status,
-                latestHeartbeat  = latest,
-                heartbeatHistory = filteredHistory.reversed(),
-                isConnected      = isConnected
-            ) as DashboardUiState
+                val latest = history.firstOrNull()
+                
+                val heartbeatActive = latest != null && abs(now - latest.recordedAt.toEpochMilli()) < 120_000
+                val isConnected = mqttConnected && heartbeatActive
+
+                DashboardUiState.Success(
+                    nodeStatus       = status,
+                    latestHeartbeat  = latest,
+                    heartbeatHistory = history.reversed(),
+                    isConnected      = isConnected,
+                    mqttError        = mqttError
+                ) as DashboardUiState
+            }
         }
         .catch { e ->
             emit(DashboardUiState.Error(e.message ?: "Unknown error"))
@@ -64,12 +79,11 @@ class DashboardViewModel @Inject constructor(
             initialValue = DashboardUiState.Loading
         )
 
-    private val filteredHistoryFlow = combine(
-        getHeartbeatHistory(),
-        devSettings.isDeveloperModeEnabled.distinctUntilChanged()
-    ) { history, devMode ->
-        if (devMode) history else history.filter { !it.isMock }
-    }
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val filteredHistoryFlow = devSettings.isDeveloperModeEnabled.distinctUntilChanged()
+        .flatMapLatest { devMode ->
+            getHeartbeatHistory(includeMock = devMode)
+        }
 
     val cpuTempFlow: StateFlow<Double> = filteredHistoryFlow.map { it.firstOrNull()?.cpuTempC ?: 0.0 }
         .distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)

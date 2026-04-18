@@ -14,11 +14,11 @@ class HeartbeatRepositoryImpl @Inject constructor(
     private val dao: HeartbeatDao
 ) : HeartbeatRepository {
 
-    override fun observeLast24(): Flow<List<Heartbeat>> =
-        dao.observeLast24().map { list -> list.map { it.toDomain() } }
+    override fun observeLast24(includeMock: Boolean): Flow<List<Heartbeat>> =
+        dao.observeLast24(includeMock).map { list -> list.map { it.toDomain() } }
 
-    override fun observeLatest(): Flow<Heartbeat?> =
-        dao.observeLatest().map { it?.toDomain() }
+    override fun observeLatest(includeMock: Boolean): Flow<Heartbeat?> =
+        dao.observeLatest(includeMock).map { it?.toDomain() }
 
     private fun HeartbeatEntity.toDomain() = Heartbeat(
         cpuTempC         = cpuTempC,

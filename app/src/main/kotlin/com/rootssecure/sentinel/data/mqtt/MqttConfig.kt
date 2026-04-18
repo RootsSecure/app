@@ -11,12 +11,12 @@ package com.rootssecure.sentinel.data.mqtt
  * it as a Wi-Fi hotspot (192.168.4.1) or the hotspot DHCP-assigned address.
  */
 data class MqttConfig(
-    val brokerHost: String  = "broker.hivemq.cloud",
+    val brokerHost: String  = "eef332c6869d4dfe823751b6c18ebbe6.s1.eu.hivemq.cloud",
     val brokerPort: Int     = 8883,
     val useTls: Boolean     = true,
     val clientId: String    = "sentinel-mobile-client",
-    val username: String?   = "sentinel_user", // provisioned via secure portal
-    val password: String?   = "secure_password_123",
+    val username: String?   = "gunjan",
+    val password: String?   = "Gunjan123@",
     val keepAliveSeconds: Int = 60,
     val cleanSession: Boolean = true,
     val connectTimeoutSeconds: Int = 20,

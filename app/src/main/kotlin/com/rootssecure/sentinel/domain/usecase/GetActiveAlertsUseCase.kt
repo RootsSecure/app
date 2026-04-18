@@ -16,5 +16,5 @@ import javax.inject.Inject
 class GetActiveAlertsUseCase @Inject constructor(
     private val repository: AlertRepository
 ) {
-    operator fun invoke(): Flow<List<AlertEvent>> = repository.observeAll()
+    operator fun invoke(includeMock: Boolean): Flow<List<AlertEvent>> = repository.observeAll(includeMock)
 }

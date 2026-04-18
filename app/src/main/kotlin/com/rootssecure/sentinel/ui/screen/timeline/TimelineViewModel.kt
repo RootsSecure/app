@@ -2,35 +2,31 @@ package com.rootssecure.sentinel.ui.screen.timeline
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
 import com.rootssecure.sentinel.domain.usecase.FlagAlertUseCase
 import com.rootssecure.sentinel.domain.usecase.GetActiveAlertsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import com.rootssecure.sentinel.domain.repository.DeveloperSettingsRepository
-import kotlinx.coroutines.flow.*
-
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
     private val getActiveAlerts: GetActiveAlertsUseCase,
     private val flagAlert: FlagAlertUseCase,
+    private val clearAllAlertsUseCase: com.rootssecure.sentinel.domain.usecase.ClearAllAlertsUseCase,
     private val devSettings: DeveloperSettingsRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<TimelineUiState> =
-        combine(
-            getActiveAlerts(),
-            devSettings.isDeveloperModeEnabled.distinctUntilChanged()
-        ) { alerts, devMode ->
-            val filtered = if (devMode) alerts else alerts.filter { !it.isMock }
-            TimelineUiState.Success(filtered) as TimelineUiState
-        }
+        devSettings.isDeveloperModeEnabled.distinctUntilChanged()
+            .flatMapLatest { devMode ->
+                getActiveAlerts(includeMock = devMode).map { alerts ->
+                    TimelineUiState.Success(alerts) as TimelineUiState
+                }
+            }
             .catch { emit(TimelineUiState.Error(it.message ?: "Unknown error")) }
             .stateIn(
                 scope        = viewModelScope,
@@ -40,5 +36,9 @@ class TimelineViewModel @Inject constructor(
 
     fun flagAsFalseAlarm(alertId: String) {
         viewModelScope.launch { flagAlert(alertId) }
+    }
+
+    fun clearAllAlerts() {
+        viewModelScope.launch { clearAllAlertsUseCase() }
     }
 }

@@ -157,6 +157,12 @@ class MqttService : Service() {
             
             while (true) {
                 try {
+                    if (!::mqttClient.isInitialized) {
+                        Log.d(TAG, "MqttClient not yet initialized, waiting...")
+                        delay(1000)
+                        continue
+                    }
+
                     val state = mqttClient.state
                     if (state.isConnected) {
                         Log.d(TAG, "Already connected, skipping connection attempt")
@@ -179,6 +185,7 @@ class MqttService : Service() {
 
                     connectBuilder.send().get()   // block coroutine until connected
 
+                    MqttConnectionManager.setConnected(true)
                     MqttLogManager.log("Connected to ${config.brokerHost}:${config.brokerPort}")
                     Log.i(TAG, "MQTT connected → ${config.brokerHost}:${config.brokerPort}")
                     backoffIndex = 0 // reset on success
@@ -189,6 +196,8 @@ class MqttService : Service() {
                     break   // exit retry loop — subscriptions are now live
 
                 } catch (e: Exception) {
+                    MqttConnectionManager.setConnected(false)
+                    MqttConnectionManager.setError(e.localizedMessage)
                     val currentDelay = backoffSequence[backoffIndex]
                     MqttLogManager.log("Connection failed: ${e.message}. Retrying in ${currentDelay/1000}s")
                     Log.w(TAG, "MQTT connect failed — retrying in ${currentDelay}ms", e)
@@ -374,6 +383,32 @@ class MqttService : Service() {
 
     // ── Extension Mappers ────────────────────────────────────────────────────
 
+    private fun processMediaRefs(refs: List<String>): List<String> {
+        return refs.map { ref ->
+            // If it's a standard URL or already a local file URI, pass it through.
+            if (ref.startsWith("http://") || ref.startsWith("https://") || ref.startsWith("file://")) {
+                ref
+            } else {
+                // Otherwise, treat it as a raw Base64 encoded image payload.
+                try {
+                    // Remove potential data URI prefix (e.g. "data:image/jpeg;base64,")
+                    val base64String = if (ref.contains(",")) ref.substringAfter(",") else ref
+                    val decodedBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
+                    
+                    // Save to local app cache
+                    val file = java.io.File(cacheDir, "evidence_${java.util.UUID.randomUUID()}.jpg")
+                    java.io.FileOutputStream(file).use { it.write(decodedBytes) }
+                    
+                    // Return the local file URI to be stored in the database
+                    "file://${file.absolutePath}"
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "Failed to decode inline base64 image", e)
+                    ref // Fallback (might crash DB if too large, but prevents immediate loss)
+                }
+            }
+        }
+    }
+
     private fun AlertEventDto.toEntity() = AlertEventEntity(
         vendorEventId = vendorEventId,
         alertType     = alertType,
@@ -383,7 +418,9 @@ class MqttService : Service() {
         reason        = metadataJson.reason,
         logicLevel    = metadataJson.logicLevel,
         motionRatio   = metadataJson.motionRatio,
-        mediaRef      = mediaRefs.firstOrNull() ?: "",
+        burstCount    = metadataJson.burstCount,
+        confidence    = metadataJson.confidence,
+        mediaRefs     = processMediaRefs(mediaRefs),
         nodeId        = nodeId ?: currentMqttTopicId,
         receivedAt    = Instant.now().toEpochMilli(),
         isMock        = false

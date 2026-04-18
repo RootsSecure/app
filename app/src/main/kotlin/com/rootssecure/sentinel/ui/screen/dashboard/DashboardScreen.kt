@@ -83,6 +83,15 @@ private fun DashboardContent(state: DashboardUiState.Success, viewModel: Dashboa
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.Bold
                     )
+                    
+                    state.mqttError?.let { error ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Error: $error",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = CriticalRed.copy(alpha = 0.8f)
+                        )
+                    }
                 }
             }
         } else {

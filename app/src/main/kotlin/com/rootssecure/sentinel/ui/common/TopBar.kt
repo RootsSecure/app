@@ -17,20 +17,29 @@ import com.rootssecure.sentinel.ui.theme.TealPrimary
 @Composable
 fun TopBar(
     title: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actions: @Composable (() -> Unit)? = null
 ) {
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 20.dp)
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Brand/Page Title only to avoid redundancy
+        // Brand/Page Title
         Text(
             text = title,
             style = MaterialTheme.typography.displaySmall,
             color = OnBackground,
             fontWeight = FontWeight.ExtraBold
         )
+
+        if (actions != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                actions()
+            }
+        }
     }
 }

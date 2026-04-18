@@ -9,5 +9,5 @@ import javax.inject.Inject
 class GetHeartbeatHistoryUseCase @Inject constructor(
     private val repository: HeartbeatRepository
 ) {
-    operator fun invoke(): Flow<List<Heartbeat>> = repository.observeLast24()
+    operator fun invoke(includeMock: Boolean): Flow<List<Heartbeat>> = repository.observeLast24(includeMock)
 }

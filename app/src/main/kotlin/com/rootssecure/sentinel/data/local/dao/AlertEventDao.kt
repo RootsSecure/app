@@ -21,12 +21,12 @@ interface AlertEventDao {
     suspend fun insert(event: AlertEventEntity)
 
     /** Observe all alerts ordered by occurrence time descending (newest first). */
-    @Query("SELECT * FROM alert_events ORDER BY occurred_at DESC")
-    fun observeAll(): Flow<List<AlertEventEntity>>
+    @Query("SELECT * FROM alert_events WHERE (:includeMock OR is_mock = 0) ORDER BY occurred_at DESC")
+    fun observeAll(includeMock: Boolean): Flow<List<AlertEventEntity>>
 
     /** Observe only CRITICAL alerts. */
-    @Query("SELECT * FROM alert_events WHERE logic_level = 'CRITICAL' ORDER BY occurred_at DESC")
-    fun observeCritical(): Flow<List<AlertEventEntity>>
+    @Query("SELECT * FROM alert_events WHERE severity = 'CRITICAL' AND (:includeMock OR is_mock = 0) ORDER BY occurred_at DESC")
+    fun observeCritical(includeMock: Boolean): Flow<List<AlertEventEntity>>
 
     /** Get a single alert by its vendor ID (for the detail screen). */
     @Query("SELECT * FROM alert_events WHERE vendor_event_id = :id LIMIT 1")
@@ -39,4 +39,13 @@ interface AlertEventDao {
     /** Delete alerts older than [thresholdEpochMs] to limit storage usage. */
     @Query("DELETE FROM alert_events WHERE received_at < :thresholdEpochMs")
     suspend fun deleteOlderThan(thresholdEpochMs: Long)
+
+    @Query("DELETE FROM alert_events WHERE is_mock = 1")
+    suspend fun deleteMockData()
+
+    @Query("SELECT * FROM alert_events")
+    suspend fun getAllAlerts(): List<AlertEventEntity>
+
+    @Query("DELETE FROM alert_events")
+    suspend fun deleteAll()
 }

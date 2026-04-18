@@ -80,20 +80,77 @@ private fun AlertDetailContent(alert: AlertEvent) {
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Full-width evidence image
-        if (alert.imageUrl.isNotBlank()) {
-            AsyncImage(
-                model             = alert.imageUrl,
-                contentDescription = "1080p visual proof",
-                contentScale      = ContentScale.Crop,
-                modifier          = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
-                    .clip(SentinelShapes.medium)
-            )
+        // Evidence Image(s)
+        if (alert.mediaRefs.isNotEmpty()) {
+            if (alert.mediaRefs.size > 1) {
+                val pagerState = androidx.compose.foundation.pager.rememberPagerState { alert.mediaRefs.size }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.foundation.pager.HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(260.dp)
+                            .clip(SentinelShapes.medium)
+                    ) { index ->
+                        AsyncImage(
+                            model = alert.mediaRefs[index],
+                            contentDescription = "Visual evidence ${index + 1}",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    
+                    // Pager Indicator
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(alert.mediaRefs.size) { iteration ->
+                            val color = if (pagerState.currentPage == iteration) TealPrimary else OnSurfaceVariant.copy(alpha = 0.3f)
+                            Box(
+                                modifier = Modifier
+                                    .padding(2.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(color)
+                                    .size(6.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                AsyncImage(
+                    model = alert.imageUrl,
+                    contentDescription = "Visual evidence",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp)
+                        .clip(SentinelShapes.medium)
+                )
+            }
         }
 
-        SeverityBadge(severity = alert.severity)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SeverityBadge(severity = alert.severity)
+            if (alert.confidence > 0) {
+                Surface(
+                    color = SurfaceContainer,
+                    shape = SentinelShapes.extraSmall
+                ) {
+                    Text(
+                        text = "Confidence: ${(alert.confidence * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurface,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
 
         Text(
             text  = alert.title,
@@ -112,6 +169,7 @@ private fun AlertDetailContent(alert: AlertEvent) {
         // Metadata table
         MetadataRow("Event ID",    alert.id)
         MetadataRow("Occurred At", detailFormatter.format(alert.occurredAt))
+        MetadataRow("Burst Count", "${alert.burstCount} frames")
         MetadataRow("Status",      if (alert.isFlagged) "Flagged as False Alarm" else "Active")
     }
 }

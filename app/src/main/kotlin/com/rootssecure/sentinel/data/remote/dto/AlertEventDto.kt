@@ -31,6 +31,8 @@ data class AlertMetadataDto(
     @SerialName("edge_event_type")       val edgeEventType: String,
     @SerialName("recommended_severity")  val recommendedSeverity: String,
     @SerialName("reason")                val reason: String,
-    @SerialName("logic_level")           val logicLevel: String,
-    @SerialName("motion_ratio")          val motionRatio: Double = 0.0
+    @SerialName("logic_level")           val logicLevel: String? = null,
+    @SerialName("motion_ratio")          val motionRatio: Double = 0.0,
+    @SerialName("burst_count")           val burstCount: Int = 1,
+    @SerialName("confidence")            val confidence: Double = 0.0
 )

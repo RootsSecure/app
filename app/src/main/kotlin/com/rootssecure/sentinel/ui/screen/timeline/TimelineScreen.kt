@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -31,7 +33,18 @@ fun TimelineScreen(
             .fillMaxSize()
             .background(Background)
     ) {
-        TopBar(title = "Alert Timeline")
+        TopBar(
+            title = "Alert Timeline",
+            actions = {
+                androidx.compose.material3.IconButton(onClick = { viewModel.clearAllAlerts() }) {
+                    androidx.compose.material3.Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.DeleteSweep,
+                        contentDescription = "Clear All Alerts",
+                        tint = com.rootssecure.sentinel.ui.theme.CriticalRed
+                    )
+                }
+            }
+        )
 
         AnimatedContent(targetState = state, label = "timeline_state") { uiState ->
             when (uiState) {

@@ -22,9 +22,11 @@ data class AlertEventEntity(
     @ColumnInfo(name = "edge_event_type") val edgeEventType: String,
     @ColumnInfo(name = "severity")        val severity: String,
     @ColumnInfo(name = "reason")          val reason: String,
-    @ColumnInfo(name = "logic_level")     val logicLevel: String,
+    @ColumnInfo(name = "logic_level")     val logicLevel: String? = null,
     @ColumnInfo(name = "motion_ratio")    val motionRatio: Double,
-    @ColumnInfo(name = "media_ref")       val mediaRef: String,
+    @ColumnInfo(name = "burst_count")     val burstCount: Int = 1,
+    @ColumnInfo(name = "confidence")      val confidence: Double = 0.0,
+    @ColumnInfo(name = "media_refs")      val mediaRefs: List<String>,
     @ColumnInfo(name = "node_id")         val nodeId: String? = null,
     @ColumnInfo(name = "received_at")     val receivedAt: Long,   // epoch ms
     @ColumnInfo(name = "is_flagged")      val isFlagged: Boolean = false,

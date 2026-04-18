@@ -10,8 +10,9 @@ sealed class DashboardUiState {
     data class Success(
         val nodeStatus: EdgeNodeStatus,
         val latestHeartbeat: Heartbeat?,
-        val heartbeatHistory: List<Heartbeat>,  // chronological, oldest first, for charts
-        val isConnected: Boolean = false
+        val heartbeatHistory: List<Heartbeat>,
+        val isConnected: Boolean = false,
+        val mqttError: String? = null
     ) : DashboardUiState()
 
     data class Error(val message: String) : DashboardUiState()

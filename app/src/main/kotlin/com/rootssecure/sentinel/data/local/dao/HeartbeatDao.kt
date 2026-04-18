@@ -14,14 +14,17 @@ interface HeartbeatDao {
     suspend fun insert(heartbeat: HeartbeatEntity)
 
     /** Observe the last 24 heartbeat records for the telemetry charts. */
-    @Query("SELECT * FROM heartbeats ORDER BY recorded_at DESC LIMIT 24")
-    fun observeLast24(): Flow<List<HeartbeatEntity>>
+    @Query("SELECT * FROM heartbeats WHERE (:includeMock OR is_mock = 0) ORDER BY recorded_at DESC LIMIT 24")
+    fun observeLast24(includeMock: Boolean): Flow<List<HeartbeatEntity>>
 
     /** Most recent heartbeat only — for dashboard status card. */
-    @Query("SELECT * FROM heartbeats ORDER BY recorded_at DESC LIMIT 1")
-    fun observeLatest(): Flow<HeartbeatEntity?>
+    @Query("SELECT * FROM heartbeats WHERE (:includeMock OR is_mock = 0) ORDER BY recorded_at DESC LIMIT 1")
+    fun observeLatest(includeMock: Boolean): Flow<HeartbeatEntity?>
 
     /** Remove records older than 25 hours to limit DB size. */
     @Query("DELETE FROM heartbeats WHERE recorded_at < :thresholdEpochMs")
     suspend fun deleteOlderThan(thresholdEpochMs: Long)
+
+    @Query("DELETE FROM heartbeats WHERE is_mock = 1")
+    suspend fun deleteMockData()
 }

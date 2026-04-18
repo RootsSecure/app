@@ -20,11 +20,11 @@ class AlertRepositoryImpl @Inject constructor(
     private val dao: AlertEventDao
 ) : AlertRepository {
 
-    override fun observeAll(): Flow<List<AlertEvent>> =
-        dao.observeAll().map { entities -> entities.map { it.toDomain() } }
+    override fun observeAll(includeMock: Boolean): Flow<List<AlertEvent>> =
+        dao.observeAll(includeMock).map { entities -> entities.map { it.toDomain() } }
 
-    override fun observeCritical(): Flow<List<AlertEvent>> =
-        dao.observeCritical().map { entities -> entities.map { it.toDomain() } }
+    override fun observeCritical(includeMock: Boolean): Flow<List<AlertEvent>> =
+        dao.observeCritical(includeMock).map { entities -> entities.map { it.toDomain() } }
 
     override suspend fun getById(id: String): AlertEvent? =
         dao.getById(id)?.toDomain()
@@ -32,15 +32,34 @@ class AlertRepositoryImpl @Inject constructor(
     override suspend fun flagAsFalseAlarm(id: String) =
         dao.flagAsFalseAlarm(id)
 
+    override suspend fun clearAllAlerts() {
+        val allAlerts = dao.getAllAlerts()
+        allAlerts.forEach { alert ->
+            alert.mediaRefs.forEach { ref ->
+                if (ref.startsWith("file://")) {
+                    try {
+                        java.io.File(java.net.URI(ref)).delete()
+                    } catch (e: Exception) {
+                        // Ignore deletion errors
+                    }
+                }
+            }
+        }
+        dao.deleteAll()
+    }
+
     // ── Mapper ────────────────────────────────────────────────────────────────
 
     private fun AlertEventEntity.toDomain() = AlertEvent(
         id         = vendorEventId,
         title      = edgeEventType.replace("_", " "),
         reason     = reason,
-        severity   = AlertSeverity.fromString(logicLevel),
+        severity   = AlertSeverity.fromString(severity),
         occurredAt = Instant.parse(occurredAt),
-        imageUrl   = mediaRef,
+        imageUrl   = mediaRefs.firstOrNull() ?: "",
+        mediaRefs  = mediaRefs,
+        confidence = confidence,
+        burstCount = burstCount,
         isFlagged  = isFlagged,
         isMock     = isMock
     )

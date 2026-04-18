@@ -6,14 +6,17 @@ import kotlinx.coroutines.flow.Flow
 /** Repository interface — no Android / Room types. Implemented in data layer. */
 interface AlertRepository {
     /** Reactive stream of all alerts ordered newest-first. Updates on new MQTT messages. */
-    fun observeAll(): Flow<List<AlertEvent>>
+    fun observeAll(includeMock: Boolean): Flow<List<AlertEvent>>
 
     /** Reactive stream of CRITICAL-only alerts. */
-    fun observeCritical(): Flow<List<AlertEvent>>
+    fun observeCritical(includeMock: Boolean): Flow<List<AlertEvent>>
 
     /** Get a single alert by its vendor event ID. Returns null if not found. */
     suspend fun getById(id: String): AlertEvent?
 
     /** Mark an alert as a false alarm (does not delete it). */
     suspend fun flagAsFalseAlarm(id: String)
+
+    /** Delete all alerts from the local store. */
+    suspend fun clearAllAlerts()
 }

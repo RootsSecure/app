@@ -31,6 +31,16 @@ class MockTelemetrySimulator @Inject constructor(
     fun stopSimulation() {
         simulationJob?.cancel()
         simulationJob = null
+        
+        // Wipe all mock data to prevent stale UI
+        scope.launch {
+            clearMockData()
+        }
+    }
+
+    private suspend fun clearMockData() {
+        heartbeatDao.deleteMockData()
+        alertDao.deleteMockData()
     }
 
     private suspend fun simulateHeartbeats() {
@@ -69,6 +79,9 @@ class MockTelemetrySimulator @Inject constructor(
             delay(Random.nextLong(30_000, 60_000)) // 30-60 seconds
             
             val (type, reason) = alertTypes.random()
+            val burstCount = Random.nextInt(2, 5)
+            val mediaRefs = List(burstCount) { i -> "https://picsum.photos/seed/${Random.nextInt()}/1080/720" }
+            
             val alert = AlertEventEntity(
                 vendorEventId  = UUID.randomUUID().toString(),
                 alertType      = type,
@@ -76,9 +89,11 @@ class MockTelemetrySimulator @Inject constructor(
                 edgeEventType  = type,
                 severity       = if (type == "CONSTRUCTION_VEHICLE_DETECTED" || type == "SECURITY_BREACH") "CRITICAL" else "WARNING",
                 reason         = reason,
-                logicLevel     = if (type == "CONSTRUCTION_VEHICLE_DETECTED" || type == "SECURITY_BREACH") "CRITICAL" else "WARNING",
-                motionRatio    = Random.nextDouble(0.0, 1.0),
-                mediaRef       = "https://picsum.photos/seed/${Random.nextInt()}/400/300",
+                logicLevel     = null,
+                motionRatio    = Random.nextDouble(0.1, 0.4),
+                burstCount     = burstCount,
+                confidence     = Random.nextDouble(0.7, 0.99),
+                mediaRefs      = mediaRefs,
                 nodeId         = "MOCK_NODE_99",
                 receivedAt     = Instant.now().toEpochMilli(),
                 isFlagged      = false,

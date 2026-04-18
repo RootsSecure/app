@@ -11,5 +11,20 @@ import dagger.hilt.android.HiltAndroidApp
  * foreground service ([data.mqtt.MqttService]) which connects directly to
  * the Mosquitto broker running on the Raspberry Pi 4.
  */
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
+
 @HiltAndroidApp
-class SentinelApp : Application()
+class SentinelApp : Application(), SingletonImageLoader.Factory {
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        return ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory())
+            }
+            .crossfade(true)
+            .build()
+    }
+}

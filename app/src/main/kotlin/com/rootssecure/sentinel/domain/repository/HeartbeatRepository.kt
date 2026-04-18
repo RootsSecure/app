@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface HeartbeatRepository {
     /** Observe the last 24 heartbeat snapshots for chart rendering. */
-    fun observeLast24(): Flow<List<Heartbeat>>
+    fun observeLast24(includeMock: Boolean): Flow<List<Heartbeat>>
 
     /** Observe only the most recent heartbeat for the status card. */
-    fun observeLatest(): Flow<Heartbeat?>
+    fun observeLatest(includeMock: Boolean): Flow<Heartbeat?>
 }
